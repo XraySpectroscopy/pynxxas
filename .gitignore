@@ -1,7 +1,7 @@
 # Hidden files
 .*
 !.gitignore
-!.gitlab-ci.yml
+!.github
 !.readthedocs.yaml
 
 # Byte / compiled / optimized
