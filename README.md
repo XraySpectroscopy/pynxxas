@@ -1,2 +1,2 @@
 # pynxxas
-Library for reading and writing XAS data in NeXus
+Library for reading and writing XAS data in NeXus format.
