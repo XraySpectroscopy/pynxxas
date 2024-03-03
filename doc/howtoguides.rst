@@ -5,3 +5,4 @@ How-to Guides
 
     howtoguides/install
     howtoguides/convert_files
+    howtoguides/nxdl_validate

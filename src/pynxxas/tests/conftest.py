@@ -1,4 +1,6 @@
 import pytest
+
+from ..nxdl import repo
 from ..models import NxXasModel
 from ..io.xdi import load_xdi_file
 
@@ -68,3 +70,9 @@ _XDI_CONTENT = """
   7509.0000      -0.51329170        165872.70
   7519.0000      -0.78493490        161255.70
 """
+
+
+@pytest.fixture(scope="session")
+def repo_directory(tmpdir_factory) -> str:
+    root = tmpdir_factory.mktemp("nexus_definitions")
+    return repo._get_repo(localdir=str(root / "official_repo")).working_dir
