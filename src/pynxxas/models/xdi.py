@@ -1,3 +1,6 @@
+"""XAS Data Interchange (XDI) data model_instance
+"""
+
 import datetime
 from typing import Optional, List, Any, Mapping
 
@@ -110,12 +113,12 @@ class XdiData(XdiBaseModel):
 
 
 class XdiModel(XdiBaseModel):
-    element: Optional[XdiElementNamespace] = None
-    scan: Optional[XdiScanNamespace] = None
-    mono: Optional[XdiMonoNamespace] = None
-    beamline: Optional[XdiBeamlineNamespace] = None
-    facility: Optional[XdiFacilityNamespace] = None
-    detector: Optional[XdiDetectorNamespace] = None
-    sample: Optional[XdiSampleNamespace] = None
-    comments: Optional[List[str]] = None
-    data: Optional[XdiData] = None
+    element: XdiElementNamespace = XdiElementNamespace()
+    scan: XdiScanNamespace = XdiScanNamespace()
+    mono: XdiMonoNamespace = XdiMonoNamespace()
+    beamline: XdiBeamlineNamespace = XdiBeamlineNamespace()
+    facility: XdiFacilityNamespace = XdiFacilityNamespace()
+    detector: XdiDetectorNamespace = XdiDetectorNamespace()
+    sample: XdiSampleNamespace = XdiSampleNamespace()
+    comments: List[str] = list()
+    data: XdiData = XdiData()

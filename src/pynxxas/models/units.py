@@ -43,8 +43,9 @@ class _QuantityPydanticAnnotation:
         _source_type: Any,
         _handler: pydantic.GetCoreSchemaHandler,
     ) -> core_schema.CoreSchema:
-        def serialize(value: pint.Quantity) -> List:
-            return list(value.to_tuple())
+        def serialize(value: Any) -> List:
+            value = as_quantity(value)
+            return [value.magnitude.tolist(), str(value.units)]
 
         json_schema = core_schema.chain_schema(
             [

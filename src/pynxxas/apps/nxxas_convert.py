@@ -1,12 +1,14 @@
 import sys
 import logging
 import argparse
-from glob import glob
 
-from ..io.xdi import read_xdi
+from .. import models
+from ..io.convert import convert_files
+
+logger = logging.getLogger(__name__)
 
 
-def main(argv=None):
+def main(argv=None) -> int:
     if argv is None:
         argv = sys.argv
 
@@ -14,20 +16,31 @@ def main(argv=None):
         prog="nxxas_convert", description="Convert data to NXxas format"
     )
 
-    parser.add_argument("--output", type=str, default=None, help="Path to HDF5 file")
     parser.add_argument(
-        "patterns",
+        "--output-format",
         type=str,
-        nargs="+",
-        help="Glob file name patterns",
+        default="nexus",
+        choices=list(models.MODELS),
+        help="Output format",
+    )
+
+    parser.add_argument(
+        "file_patterns",
+        type=str,
+        nargs="*",
+        help="Files to convert",
+    )
+
+    parser.add_argument(
+        "output_filename", type=str, help="Convert destination filename"
     )
 
     args = parser.parse_args(argv[1:])
     logging.basicConfig()
 
-    for pattern in args.patterns:
-        for filename in glob(pattern):
-            read_xdi(filename)
+    convert_files(
+        args.file_patterns, args.output_filename, args.output_format, interactive=True
+    )
 
 
 if __name__ == "__main__":

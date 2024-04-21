@@ -1,4 +1,6 @@
 import pytest
+from ..models import NxXasModel
+from ..io.xdi import load_xdi_file
 
 
 @pytest.fixture()
@@ -8,6 +10,24 @@ def xdi_file(tmp_path):
         fh.write(_XDI_CONTENT)
     return filename
 
+
+@pytest.fixture()
+def xdi_model(xdi_file):
+    return next(load_xdi_file(xdi_file))
+
+
+@pytest.fixture()
+def nxxas_model():
+    return NxXasModel(**_NXXAS_CONTENT)
+
+
+_NXXAS_CONTENT = {
+    "element": "Co",
+    "absorption_edge": "K",
+    "mode": "transmission",
+    "energy": [[7509, 7519], "eV"],
+    "intensity": [[-0.51329170, -0.78493490], ""],
+}
 
 _XDI_CONTENT = """
 # XDI/1.0 GSE/1.0

@@ -4,7 +4,11 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+import os
+import sys
 from pynxxas import __version__ as release
+
+sys.path.append(os.path.abspath("./_ext"))
 
 project = "pynxxas"
 version = ".".join(release.split(".")[:2])
@@ -20,6 +24,7 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.viewcode",
     "sphinx_autodoc_typehints",
+    "myhdf5_inline_role",
 ]
 templates_path = ["_templates"]
 exclude_patterns = ["build"]
@@ -39,7 +44,8 @@ autodoc_default_flags = [
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "pydata_sphinx_theme"
-html_static_path = []
+html_static_path = ["_static"]
+html_extra_path = []
 html_theme_options = {
     "icon_links": [
         {

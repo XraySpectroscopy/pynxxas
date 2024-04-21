@@ -1,29 +1,37 @@
+"""XAS Data Interchange (XDI) file format
+"""
+
 import re
-import pathlib
 import datetime
-from typing import Union, Tuple, Optional
+from typing import Union, Tuple, Optional, Generator
 
 import pint
 import numpy
 
+from . import url_utils
 from ..models import units
 from ..models.xdi import XdiModel
 
 
-def is_xdi_file(filename: Union[str, pathlib.Path]) -> bool:
+def is_xdi_file(url: url_utils.UrlType) -> bool:
+    filename = url_utils.as_url(url).path
     with open(filename, "r") as file:
-        for line in file:
-            line = line.strip()
-            if not line:
-                continue
-            return line.startswith("# XDI")
+        try:
+            for line in file:
+                line = line.strip()
+                if not line:
+                    continue
+                return line.startswith("# XDI")
+        except Exception:
+            return False
 
 
-def read_xdi(filename: Union[str, pathlib.Path]) -> XdiModel:
+def load_xdi_file(url: url_utils.UrlType) -> Generator[XdiModel, None, None]:
     """Specs described in
 
     https://github.com/XraySpectroscopy/XAS-Data-Interchange/blob/master/specification/spec.md
     """
+    filename = url_utils.as_url(url).path
     content = {"comments": [], "column": dict(), "data": dict()}
 
     with open(filename, "r") as file:
@@ -78,10 +86,8 @@ def read_xdi(filename: Union[str, pathlib.Path]) -> XdiModel:
                     key = _parse_xdi_value(key)
                     content[key] = value
 
-        # Data
-        table = numpy.loadtxt(file, dtype=float)
-
-    # Parse data in dictionary of pint Quantity objects
+    # Data
+    table = numpy.loadtxt(filename, dtype=float)
     columns = [
         name
         for _, name in sorted(content.pop("column").items(), key=lambda tpl: tpl[0])
@@ -90,7 +96,13 @@ def read_xdi(filename: Union[str, pathlib.Path]) -> XdiModel:
         name, quant = _parse_xdi_column_name(name)
         content["data"][name] = array, quant
 
-    return XdiModel(**content)
+    yield XdiModel(**content)
+
+
+def save_xdi_file(model_instance: XdiModel, url: url_utils.UrlType) -> None:
+    raise NotImplementedError(
+        f"Saving of {type(model_instance).__name__} not implemented"
+    )
 
 
 _XDI_FIELD_REGEX = re.compile(r"#\s*([\w.]+):\s*(.*)")
@@ -134,10 +146,13 @@ def _parse_xdi_value(
 
 def _parse_xdi_column_name(
     name: str,
-) -> Union[Tuple[str, Optional[pint.Unit]]]:
+) -> Union[Tuple[str, Optional[str]]]:
     parts = _SPACES_REGEX.split(name)
     if len(parts) == 1:
         return name, None
-    if len(parts) == 2:
-        return tuple(parts)
-    raise ValueError(f"XDI column name '{name}' is not valid")
+    try:
+        units.as_units(parts[-1])
+    except pint.UndefinedUnitError:
+        return name, None
+    name = " ".join(parts[:-1])
+    return name, parts[-1]
