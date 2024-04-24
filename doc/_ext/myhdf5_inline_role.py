@@ -31,10 +31,11 @@ def inject_dynamic_url_js(app, pagename, templatename, context, doctree):
     <script>
     document.addEventListener("DOMContentLoaded", function() {
         var links = document.querySelectorAll("a.myhdf5");
-        var currentURL = encodeURIComponent(window.location.href + "_static/");
+        var currentURL = window.location.href.replace("index.html", "");
+        var resourceURL = encodeURIComponent(currentURL + "_static/");
         links.forEach(function(link) {
             var href = link.getAttribute("href");
-            link.setAttribute("href", href.replace("placeholder", currentURL));
+            link.setAttribute("href", href.replace("placeholder", resourceURL));
         });
     });
     </script>
