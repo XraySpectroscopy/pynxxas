@@ -1,15 +1,14 @@
-"""NeXus data model_instance
-"""
+"""NeXus data model_instance"""
 
-from typing import Dict, Literal, List, Optional, Any
+from typing import Any, Dict, List, Literal, Optional
 
 try:
     from enum import StrEnum
 except ImportError:
     from strenum import StrEnum
 
-import pydantic
 import periodictable
+import pydantic
 
 from . import units
 
@@ -69,8 +68,13 @@ ChemicalElement = StrEnum(
     "ChemicalElement", {el.symbol: el.symbol for el in periodictable.elements}
 )
 
-XRayCoreExcitationState = StrEnum(
-    "XRayCoreExcitationState", {s: s for s in ("K", "L1", "L2", "L3")}
+XRayAbsorptionEdge = StrEnum(
+    "XRayAbsorptionEdge", {s: s for s in ("K", "L1", "L2", "L3")}
+)
+
+XRayEmissionLines = StrEnum(
+    "XRayEmissionLines",
+    {s: s for s in ("K-L1", "K-L2", "K-L3", "K-M1", "K-M2", "K-M3")},
 )
 
 
@@ -79,7 +83,8 @@ class NxXasModel(NxClass, NxGroup, nx_class="NXxas"):
     definition: Literal["NXxas"] = "NXxas"
     mode: NxXasMode
     element: ChemicalElement
-    absorption_edge: XRayCoreExcitationState
+    absorption_edge: XRayAbsorptionEdge
+    emission_lines: Optional[XRayEmissionLines] = None
     energy: units.PydanticQuantity = units.as_quantity([])
     intensity: units.PydanticQuantity = units.as_quantity([])
     title: Optional[str] = None
