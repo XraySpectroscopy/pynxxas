@@ -6,11 +6,14 @@ import os
 import sys
 import time
 import string
+from pathlib import Path
 from types import SimpleNamespace
+
 import numpy as np
 
-from .xafs_beamlines import guess_beamline
-from .utils import read_textfile, fix_varname
+from .xas_beamlines import guess_beamline
+from .utils import (read_textfile, fix_varname,
+                    MAX_FILESIZE, COMMENTCHARS)
 
 def colname(txt):
     return fix_varname(txt.strip().lower()).replace(".", "_")
@@ -44,7 +47,7 @@ def getfloats(txt, sepchars=(",", "|", "\t"), invalid=None):
     return words
 
 
-def read_column_file(filename, labels=None, simple_labels=False,
+def read_columnfile(filename, labels=None, simple_labels=False,
                sort=False, sort_column=0):
     """read a plaintext column file, returning a group
     containing the data extracted from the file.
@@ -123,7 +126,7 @@ def read_column_file(filename, labels=None, simple_labels=False,
         elif section == "HEADER":
             headers.append(line)
         elif section == "DATA":
-            rowdat  = getflooats(line)
+            rowdat  = getfloats(line)
             if ncol is None:
                 ncol = len(rowdat)
             elif ncol > len(rowdat):
@@ -233,7 +236,7 @@ def set_array_labels(group, labels=None, simple_labels=False,
     """
     write = sys.stdout.write
     if not hasattr(group, "data"):
-        write("cannot set array labels for group "%s": no `data`\n" % repr(group))
+        write(f"cannot set array labels for group {group}: no `data`\n")
         return
 
     # clear old arrays, if desired
@@ -250,7 +253,7 @@ def set_array_labels(group, labels=None, simple_labels=False,
     # generating array `tlabels` for test labels
     #
     # generate simple column labels, used as backup
-    clabels = ["col%d" % (i+1) for i in range(ncols)]
+    clabels = [f"col{i+1:d}" for i in range(ncols)]
 
     if isinstance(labels, str):
         labels = labels.split()
@@ -266,7 +269,7 @@ def set_array_labels(group, labels=None, simple_labels=False,
     # 2.a: check for not enough and too many labels
     if len(tlabels) < ncols:
         for i in range(len(tlabels), ncols):
-            tlabels.append("col%i" % (i+1))
+            tlabels.append(f"col{i+1:d}")
     elif len(tlabels) > ncols:
         tlabels = tlabels[:ncols]
 
@@ -285,7 +288,7 @@ def set_array_labels(group, labels=None, simple_labels=False,
                 j += 1
                 if j == len(extras):
                     break
-                lname = "%s_%s" % (tlabels[i], extras[j])
+                lname = f"{tlabels[i]}_{extras[j]}"
         if lname in labels:
             lname = clabels[i]
         labels.append(lname)
@@ -361,7 +364,7 @@ def write_ascii(filename, *args, commentchar="#", label=None, header=None):
 
     with open(filename, "w", encoding=sys.getdefaultencoding()) as fout:
         fout.write("\n".join(buff))
-    sys.stdout.write("wrote to file "%s"\n" % filename)
+    write(f"wrote to file '{filename}'")
 
 
 def read_fdmnes(filename, **kwargs):
