@@ -1,0 +1,29 @@
+These examples are essentially built by hand as proof-of-principle
+and as points of discussion to drive the pynxxas and NXxas definition.
+
+
+For all datasets:
+
+1. "intensity" is edge-step normalized XAS.  The processing steps are
+    done with xraylarch, but in a way (linear pre-edge, constant edge step),
+    that it should be easy to reproduce.
+
+2. "New" XDI files are written to very, very closely match the NXxas Groups.
+
+3. The group "rawdata" holds the "original" column data.  It also
+   includes (in column 2, the "intensity"/"normalized mu(E)" so that
+   the data shape is identical to the new XDI file
+
+
+The scripts are pretty "hacky" and not meant for real use in pynnxas, but more
+of a guide.  My intention is to *not* rely on larch, but to port code to
+robustly read text files, and do basic processing (including pre-edge
+subtraction and normalization) into pynxxas.
+
+
+
+Folders and Files (so far):
+=============================
+
+Fe_XDIFiles:  3 XDI files (all Fe K edge, transmsission XAFS)
+      put into a single nexus file.
