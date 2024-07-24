@@ -13,6 +13,11 @@ import periodictable
 
 from . import units
 
+XRAY_EDGES = ("K", "L1", "L2", "L3", "M1", "M2", "M3", "M4", "M5",
+              "N1", "N2", "M3", "N4", "N5", "N6", "N7",
+              "O1", "O2", "O3", "P1", "P2", "P3")
+
+ATOMIC_SYMBOLS = [e.symbol for e in periodictable.elements][1:]
 
 class NxGroup(pydantic.BaseModel, extra="allow"):
     pass
@@ -66,11 +71,11 @@ class NxXasMode(StrEnum):
 
 
 ChemicalElement = StrEnum(
-    "ChemicalElement", {el.symbol: el.symbol for el in periodictable.elements}
-)
+    "ChemicalElement", {s: s for s in ATOMIC_SYMBOLS}
+    )
 
 XRayCoreExcitationState = StrEnum(
-    "XRayCoreExcitationState", {s: s for s in ("K", "L1", "L2", "L3")}
+    "XRayCoreExcitationState", {s: s for s in XRAY_EDGES}
 )
 
 

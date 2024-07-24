@@ -32,20 +32,35 @@ class XdiMonoNamespace(XdiBaseModel):
     d_spacing: Optional[units.PydanticQuantity] = None
 
 
+# common alternate spellings of XDI arrays
+XDI_ARRAY_ALIASES =  {"monitor": "i0",
+                      "i1": "itrans",
+                      "itransmission": "itrans",
+                      "if": "ifluor",
+                      "ifl": "ifluor",
+                      "ifluo": "ifluor",
+                      "ifluorescence": "ifluor",
+                      "iref": "irefer",
+                      "ir": "irefer",
+                      }
+
+
 class XdiDetectorNamespace(XdiBaseModel):
     i0: Optional[str] = None
-    it: Optional[str] = None
-    ifluo: Optional[str] = None
-    ir: Optional[str] = None
+    itrans: Optional[str] = None
+    ifluor: Optional[str] = None
+    irefer: Optional[str] = None
 
     @pydantic.model_validator(mode="before")
     @classmethod
-    def rename_if(cls, data: Any) -> Any:
+    def resolve_aliases(cls, data: Any) -> Any:
         if not isinstance(data, Mapping):
             return data
-        if "if" in data:
-            data = dict(data)
-            data["ifluo"] = data["if"]
+        data = dict(data)
+        for alias, target in XDI_ARRAY_ALIASES.items():
+            if alias in data:
+                print("resolve aliase ", alias, target)
+                data[target] = data[alias]
         return data
 
 
