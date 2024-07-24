@@ -26,4 +26,14 @@ Folders and Files (so far):
 =============================
 
 Fe_XDIFiles:  3 XDI files (all Fe K edge, transmsission XAFS)
-      put into a single nexus file.
+      are put into a single nexus file.
+
+MultiElementFluor:  12 data files (XDI-ish) for V K-edge fluoresence XAFS
+      using a 4-element detector.  The original files have columns saved
+      for "V Ka" and a "Deadtime Correction Factor" for MCAs 1 through 4.
+      The script sums the deadtime-corrected chanbels to make "ifluor".
+      V_XANES_nexus.h5
+
+
+KEK_PF: 1 data file from Photon Factory, KEK.  Fluorescence XAFS,
+      recorded as a function of angle
