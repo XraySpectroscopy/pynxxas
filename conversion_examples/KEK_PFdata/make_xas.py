@@ -8,8 +8,6 @@ from larch.io import read_xdi, read_ascii, write_ascii
 from larch.utils import gformat
 
 
-
-
 PLANCK_HC = 12398.419843320027
 DEG2RAD = 0.017453292519943295
 
@@ -94,7 +92,7 @@ def kekpf2nexus(filename, nxroot, entry_name='entry',   metadata=None):
         preline = f"({preline})*energy(-{dat.nvict})"
 
     proc = ["processing done with xraylarch version 0.9.80",
-            f"    larch.xafs.pre_edge(data, {kwargs})",
+            f"larch.xafs.pre_edge(data, {kwargs})",
             "energy = col1    # column 1: energy (eV)",
             "ifluor = col3    # column 3: fluorescence intensity",
             "i0     = col4    # column 4: incident beam intensity",
@@ -144,15 +142,16 @@ def kekpf2nexus(filename, nxroot, entry_name='entry',   metadata=None):
                                       notes=notes)
 
     # rawdata
-    root['rawdata'] = np.array(coldata)
-    root['rawdata'].attrs['column_labels'] = json.dumps(array_labels)
-    root['rawdata'].attrs['data_collector'] = 'KEK PF BL9A'
-    root['rawdata'].attrs['filename'] = filename
+    root['rawdata'] = np.array(coldata).T
+    root['rawdata'].attrs['array_labels'] = json.dumps(array_labels)
 
+    root['reference'] = 'None'
 
     # scan
     scan = root['scan'] = nexus.NXcollection()
     scan.headers = json.dumps(meta)
+    scan.data_collector = 'KEK PF BL9A'
+    scan.filename = filename
 
     if 'scan' in meta:
         for key, val in meta['scan'].items():

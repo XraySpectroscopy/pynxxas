@@ -120,7 +120,7 @@ def xdi2nexus(filename, nxroot, entry_name='entry',
         dtc = "with deadtime corection from columns in the data"
     nd = len(coldata)
     proc = ["processing done with xraylarch version 0.9.80",
-            f"    larch.xafs.pre_edge(data, {kwargs})",
+            f"larch.xafs.pre_edge(data, {kwargs})",
             f"using col1..col{nd} for {nd} from arrays in rawdata",
             "energy = col1    # column 1: energy (eV)",
             "i0     = col4    # column 4: incident beam intensity",
@@ -171,15 +171,16 @@ def xdi2nexus(filename, nxroot, entry_name='entry',
                                       notes=notes)
 
     # rawdata
-    root['rawdata'] = np.array(coldata)
-    root['rawdata'].attrs['column_labels'] = json.dumps(array_labels)
-    root['rawdata'].attrs['data_collector'] = 'Matthew Newville'
-    root['rawdata'].attrs['filename'] = filename
+    root['rawdata'] = np.array(coldata).T
+    root['rawdata'].attrs['array_labels'] = json.dumps(array_labels)
 
+    root['reference'] = 'None'
 
     # scan
     scan = root['scan'] = nexus.NXcollection()
     scan.headers = json.dumps(meta)
+    scan.data_collector = 'Tony Lanzirotti'
+    scan.filename = filename
 
     for key, val in meta['scan'].items():
         setattr(scan, key, val)

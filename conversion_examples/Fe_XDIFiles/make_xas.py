@@ -67,7 +67,7 @@ def xdi2nexus(filename, nxroot, entry_name='entry',
         preline = f"({preline})*energy(-{dat.nvict})"
 
     proc = ["processing done with xraylarch version 0.9.80",
-            f"    larch.xafs.pre_edge(data, {kwargs})",
+            f"larch.xafs.pre_edge(data, {kwargs})",
             "using 'data' from arrays in rawdata",
             "energy = data[:,0]      # column 1: energy (eV)",
             "itrans = data[:, 2]     # column 3: transmitted beam intensity",
@@ -103,17 +103,20 @@ def xdi2nexus(filename, nxroot, entry_name='entry',
     root['process'] = nexus.NXprocess(program='xraylarch', version='0.9.80',
                                       notes=notes)
 
-
-
     # rawdata
-    root['rawdata'] = rawdata
-    root['rawdata'].attrs['column_labels'] = json.dumps(["energy", "intensity", "itrans", "i0"])
-    root['rawdata'].attrs['data_collector'] = 'Matthew Newville'
-    root['rawdata'].attrs['filename'] = filename
+    array_labels = json.dumps(["energy", "intensity", "itrans", "i0"])
+    root['rawdata'] = rawdata.T
+    root['rawdata'].attrs['array_labels'] = array_labels
 
+
+    root['reference'] = 'None'
 
     # scan
     scan = root['scan'] = nexus.NXcollection()
+    scan.attrs['data_collector'] = 'Matthew Newville'
+    scan.attrs['filename'] = filename
+
+
     scan.headers = json.dumps(dat.attrs)
 
     for key, val in dat.attrs['scan'].items():
