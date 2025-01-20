@@ -13,7 +13,7 @@ Build an *NXxas* model instance in steps
 
     from pynxxas.models import NxXasModel
 
-    nxxas_model = NxXasModel(element="Fe", absorption_edge="K", mode="transmission")
+    nxxas_model = NxXasModel(element="Fe", edge="K", mode="transmission")
     nxxas_model.energy = [7, 7.1], "keV"
     nxxas_model.intensity = [10, 20]
 
@@ -25,7 +25,7 @@ Create an *NXxas* model instance from a dictionary and convert back to a diction
         "NX_class": "NXsubentry",
         "mode": "transmission",
         "element": "Fe",
-        "absorption_edge": "K",
+        "edge": "K",
         "energy": [[7, 7.1], "keV"],
         "intensity": [10, 20],
     }

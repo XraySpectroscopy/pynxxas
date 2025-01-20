@@ -23,7 +23,7 @@ def nxxas_model():
 
 _NXXAS_CONTENT = {
     "element": "Co",
-    "absorption_edge": "K",
+    "edge": "K",
     "mode": "transmission",
     "energy": [[7509, 7519], "eV"],
     "intensity": [[-0.51329170, -0.78493490], ""],
