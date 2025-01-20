@@ -33,16 +33,17 @@ class XdiMonoNamespace(XdiBaseModel):
 
 
 # common alternate spellings of XDI arrays
-XDI_ARRAY_ALIASES =  {"monitor": "i0",
-                      "i1": "itrans",
-                      "itransmission": "itrans",
-                      "if": "ifluor",
-                      "ifl": "ifluor",
-                      "ifluo": "ifluor",
-                      "ifluorescence": "ifluor",
-                      "iref": "irefer",
-                      "ir": "irefer",
-                      }
+XDI_ARRAY_ALIASES = {
+    "monitor": "i0",
+    "i1": "itrans",
+    "itransmission": "itrans",
+    "if": "ifluor",
+    "ifl": "ifluor",
+    "ifluo": "ifluor",
+    "ifluorescence": "ifluor",
+    "iref": "irefer",
+    "ir": "irefer",
+}
 
 
 class XdiDetectorNamespace(XdiBaseModel):
