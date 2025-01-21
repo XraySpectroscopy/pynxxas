@@ -24,6 +24,10 @@ XRAY_LINES = ("K-L1",)
 XAS_MODES = ("transmission", "fy")
 # fmt: on
 
+XRayEdge = StrEnum("XRayEdge", {s: s for s in XRAY_EDGES})
+XasMode = StrEnum("XRayMode", {s: s for s in XAS_MODES})
+Symbol = StrEnum("Symbol", {s: s for s in ATOMIC_SYMBOLS})
+
 
 class NxGroup(pydantic.BaseModel, extra="allow"):
     pass
@@ -66,23 +70,17 @@ class NxInstrument(NxClass, NxGroup, nx_class="NxInstrument"):
     name: Optional[NxInstrumentName] = None
 
 
-Element = StrEnum("Element", {s: s for s in ATOMIC_SYMBOLS})
-
-
 class NxElement(NxClass, NxGroup, nx_class="NxElement"):
     NX_class: Literal["NXelement"] = pydantic.Field(
         default="NXelement", alias="@NX_class"
     )
-    symbol: Optional[Element] = None
+    symbol: Optional[Symbol] = None
     atomic_number: Optional[int] = None
 
 
 class NxEntryClass(StrEnum):
     NXentry = "NXentry"
     NXsubentry = "NXsubentry"
-
-
-XasMode = StrEnum("XRayMode", {s: s for s in XAS_MODES})
 
 
 class NxXasMode(NxClass, NxGroup, nx_class="NxXasMode"):
@@ -92,17 +90,17 @@ class NxXasMode(NxClass, NxGroup, nx_class="NxXasMode"):
     name: Optional[XasMode] = None
 
 
-# TODO: This needs to be a NXClass with a given name, not str.
-XRayEdge = StrEnum("XRayEdge", {s: s for s in XRAY_EDGES})
-XRayLine = StrEnum("XRayLine", {s: s for s in XRAY_LINES})
+class NxEdge(NxClass, NxGroup, nx_class="NxEdge"):
+    NX_class: Literal["NXedge"] = pydantic.Field(default="NXedge", alias="@NX_class")
+    name: Optional[XRayEdge] = None
 
 
-class NxXasModel(NxClass, NxGroup, nx_class="NXxas"):
-    NX_class: NxEntryClass = pydantic.Field(alias="@NX_class", default="NXentry")
+class NxXasModel(NxClass, NxGroup, nx_class="NXXas"):
+    NX_class: NxEntryClass = pydantic.Field(default="NXentry", alias="@NX_class")
     definition: Literal["NXxas"] = "NXxas"
     mode: NxXasMode
     element: NxElement
-    edge: XRayEdge
+    edge: NxEdge
     energy: units.PydanticQuantity = units.as_quantity([])
     intensity: units.PydanticQuantity = units.as_quantity([])
     title: Optional[str] = None
