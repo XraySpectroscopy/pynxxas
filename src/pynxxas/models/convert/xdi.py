@@ -14,9 +14,8 @@ def to_nxxas(xdi_model: XdiModel) -> Generator[NxXasModel, None, None]:
     if not has_mu and not has_fluo:
         return
 
-    data = {
-        "edge": xdi_model.element.edge,
-    }
+    data = {}
+    data["edge"] = {"name": xdi_model.element.edge}
 
     data["element"] = {"symbol": xdi_model.element.symbol}
 

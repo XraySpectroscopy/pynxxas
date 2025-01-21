@@ -13,7 +13,10 @@ def test_nxxas():
             "@NX_class": "NXelement",
             "symbol": "Fe",
         },
-        "edge": "K",
+        "edge": {
+            "@NX_class": "NXedge",
+            "name": "K",
+        },
         "energy": [[7, 7.1], "keV"],
         "intensity": [10, 20],
     }
@@ -25,15 +28,9 @@ def test_nxxas():
 
 def test_nxxas_defaults():
     data = {
-        "mode": {
-            "@NX_class": "NXxas_mode",
-            "name": "transmission",
-        },
-        "element": {
-            "@NX_class": "NXelement",
-            "symbol": "Fe",
-        },
-        "edge": "K",
+        "mode": {"name": "transmission"},
+        "element": {"symbol": "Fe"},
+        "edge": {"name": "K"},
     }
     model_instance = NxXasModel(**data)
 
@@ -51,7 +48,10 @@ def test_nxxas_fill_data():
             "@NX_class": "NXelement",
             "symbol": "Fe",
         },
-        "edge": "K",
+        "edge": {
+            "NX_class": "NXedge",
+            "name": "K",
+        },
     }
     model_instance = NxXasModel(**data)
     model_instance.energy = [7, 7.1], "keV"
@@ -74,7 +74,10 @@ def _expected_content(nx_class, energy, intensity):
             "symbol": "Fe",
             "atomic_number": None,
         },
-        "edge": "K",
+        "edge": {
+            "NX_class": "NXedge",
+            "name": "K",
+        },
         "energy": energy,
         "intensity": intensity,
         "title": "Fe K (transmission)",

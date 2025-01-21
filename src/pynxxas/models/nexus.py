@@ -110,7 +110,7 @@ class NxXasModel(NxClass, NxGroup, nx_class="NXxas"):
     @pydantic.model_validator(mode="after")
     def set_title(self) -> "NxXasModel":
         if self.element is not None and self.edge is not None:
-            title = f"{self.element.symbol} {self.edge}"
+            title = f"{self.element.symbol} {self.edge.name}"
             if self.instrument is not None and self.instrument.name is not None:
                 title = f"{self.instrument.name.value}: {title}"
             self.title = f"{title} ({self.mode.name})"
