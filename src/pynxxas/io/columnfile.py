@@ -12,11 +12,12 @@ from types import SimpleNamespace
 import numpy as np
 
 from .xas_beamlines import guess_beamline
-from .utils import (read_textfile, fix_varname,
-                    MAX_FILESIZE, COMMENTCHARS)
+from .utils import read_textfile, fix_varname, MAX_FILESIZE, COMMENTCHARS
+
 
 def colname(txt):
     return fix_varname(txt.strip().lower()).replace(".", "_")
+
 
 def getfloats(txt, sepchars=(",", "|", "\t"), invalid=None):
     """convert a line of numbers into a list of floats,
@@ -35,7 +36,7 @@ def getfloats(txt, sepchars=(",", "|", "\t"), invalid=None):
       list with each entry either a float or None
 
     """
-    tclean = txt.replace("\n"," ").replace("\r"," ")
+    tclean = txt.replace("\n", " ").replace("\r", " ")
     for sep in sepchars:
         tclean = tclean.replace(sep, " ")
     words = [w.strip() for w in tclean.split()]
@@ -47,8 +48,9 @@ def getfloats(txt, sepchars=(",", "|", "\t"), invalid=None):
     return words
 
 
-def read_columnfile(filename, labels=None, simple_labels=False,
-               sort=False, sort_column=0):
+def read_columnfile(
+    filename, labels=None, simple_labels=False, sort=False, sort_column=0
+):
     """read a plaintext column file, returning a group
     containing the data extracted from the file.
 
@@ -126,14 +128,14 @@ def read_columnfile(filename, labels=None, simple_labels=False,
         elif section == "HEADER":
             headers.append(line)
         elif section == "DATA":
-            rowdat  = getfloats(line)
+            rowdat = getfloats(line)
             if ncol is None:
                 ncol = len(rowdat)
             elif ncol > len(rowdat):
-                rowdat.extend([np.nan]*(ncol-len(rowdat)))
+                rowdat.extend([np.nan] * (ncol - len(rowdat)))
             elif ncol < len(rowdat):
                 for i in data:
-                    i.extend([np.nan]*(len(rowdat)-ncol))
+                    i.extend([np.nan] * (len(rowdat) - ncol))
                 ncol = len(rowdat)
             data.append(rowdat)
 
@@ -147,14 +149,15 @@ def read_columnfile(filename, labels=None, simple_labels=False,
     header_attrs = {}
     for hline in headers:
         hline = hline.strip().replace("\t", " ")
-        if len(hline) < 1: continue
+        if len(hline) < 1:
+            continue
         if hline[0] in COMMENTCHARS:
             hline = hline[1:].strip()
         keywds = []
-        if ":" in hline: # keywords in  "x: 22"
+        if ":" in hline:  # keywords in  "x: 22"
             words = hline.split(":", 1)
             keywds = words[0].split()
-        elif "=" in hline: # keywords in  "x = 22"
+        elif "=" in hline:  # keywords in  "x = 22"
             words = hline.split("=", 1)
             keywds = words[0].split()
         if len(keywds) == 1:
@@ -166,14 +169,15 @@ def read_columnfile(filename, labels=None, simple_labels=False,
 
     fpath = Path(filename)
     attrs = {"filename": filename}
-    group = SimpleNamespace(name=filename, filename=fpath.name,
-                           header=headers, data=[], array_labels=[])
+    group = SimpleNamespace(
+        name=filename, filename=fpath.name, header=headers, data=[], array_labels=[]
+    )
 
     if len(data) == 0:
         return group
 
     if sort and sort_column >= 0 and sort_column < ncol:
-         data = data[:, np.argsort(data[sort_column])]
+        data = data[:, np.argsort(data[sort_column])]
 
     group.data = data
 
@@ -202,9 +206,8 @@ def read_columnfile(filename, labels=None, simple_labels=False,
     set_array_labels(group, labels=labels, simple_labels=simple_labels)
     return group
 
-def set_array_labels(group, labels=None, simple_labels=False,
-                     save_oldarrays=False):
 
+def set_array_labels(group, labels=None, simple_labels=False, save_oldarrays=False):
     """set array names for a group from its 2D `data` array.
 
     Arguments
@@ -258,7 +261,6 @@ def set_array_labels(group, labels=None, simple_labels=False,
     if isinstance(labels, str):
         labels = labels.split()
 
-
     tlabels = labels
     # if simple column names requested or above failed, use simple column names
     if simple_labels or tlabels is None:
@@ -275,8 +277,7 @@ def set_array_labels(group, labels=None, simple_labels=False,
 
     # 2.b: check for names that clash with group attributes
     # or that are repeated, append letter.
-    reserved_names = ("data", "array_labels", "filename",
-                      "attrs", "header", "footer")
+    reserved_names = ("data", "array_labels", "filename", "attrs", "header", "footer")
     extras = string.ascii_lowercase
     labels = []
     for i in range(ncols):
@@ -353,7 +354,7 @@ def write_ascii(filename, *args, commentchar="#", label=None, header=None):
         buff.append(f"{com} {s}")
     buff.append(f"{com}--------------------------------")
     if label is None:
-        label = (" "*13).join([f"col{i+1:d}" for i in range(len(arrays))])
+        label = (" " * 13).join([f"col{i+1:d}" for i in range(len(arrays))])
     buff.append(f"{com} {label}")
 
     arrays = np.array(arrays)
@@ -372,7 +373,7 @@ def read_fdmnes(filename, **kwargs):
     group = read_ascii(filename, **kwargs)
     group.header_dict = dict(filetype="FDMNES", energy_units="eV")
     for headline in group.header:
-        if ("E_edge" in headline):
+        if "E_edge" in headline:
             if headline.startswith("#"):
                 headline = headline[1:]
             vals = [float(v) for v in headline.split(" = ")[0].split(" ") if v]
@@ -380,7 +381,7 @@ def read_fdmnes(filename, **kwargs):
             group.header_dict.update(dict(zip(vals_names, vals)))
     group.name = f"FDMNES file {filename}"
     group.energy += group.header_dict["E_edge"]
-    #fix _arrlabel -> arrlabel
+    # fix _arrlabel -> arrlabel
     for ilab, lab in enumerate(group.array_labels):
         if lab.startswith("_"):
             fixlab = lab[1:]
@@ -388,6 +389,7 @@ def read_fdmnes(filename, **kwargs):
             delattr(group, lab)
             setattr(group, fixlab, group.data[ilab])
     return group
+
 
 def guess_filereader(path, return_text=False):
     """guess function name to use to read a data file based on the file header
@@ -409,7 +411,7 @@ def guess_filereader(path, return_text=False):
         reader = "read_gsescan"
     if "xdi" in line1:
         reader = "read_xdi"
-    if "epics stepscan file" in line1 :
+    if "epics stepscan file" in line1:
         reader = "read_gsexdi"
     if ("#s" in line1) or ("#f" in line1):
         reader = "read_specfile"

@@ -5,23 +5,32 @@ def test_nxxas():
     data = {
         "@NX_class": "NXsubentry",
         "definition": "NXxas",
-        "mode": "transmission",
-        "element": "Fe",
-        "absorption_edge": "K",
+        "mode": {
+            "@NX_class": "NXxas_mode",
+            "name": "transmission",
+        },
+        "element": {
+            "@NX_class": "NXelement",
+            "symbol": "Fe",
+        },
+        "edge": {
+            "@NX_class": "NXedge",
+            "name": "K",
+        },
         "energy": [[7, 7.1], "keV"],
         "intensity": [10, 20],
     }
     model_instance = NxXasModel(**data)
 
-    expected = _expected_content("NXsubentry", [[7, 7.1], "keV"], [[10, 20], ""])
+    expected = _expected_content("NXsubentry", [[7.0, 7.1], "keV"], [[10, 20], ""])
     assert model_instance.model_dump() == expected
 
 
 def test_nxxas_defaults():
     data = {
-        "mode": "transmission",
-        "element": "Fe",
-        "absorption_edge": "K",
+        "mode": {"name": "transmission"},
+        "element": {"symbol": "Fe"},
+        "edge": {"name": "K"},
     }
     model_instance = NxXasModel(**data)
 
@@ -31,9 +40,18 @@ def test_nxxas_defaults():
 
 def test_nxxas_fill_data():
     data = {
-        "mode": "transmission",
-        "element": "Fe",
-        "absorption_edge": "K",
+        "mode": {
+            "@NX_class": "NXxas_mode",
+            "name": "transmission",
+        },
+        "element": {
+            "@NX_class": "NXelement",
+            "symbol": "Fe",
+        },
+        "edge": {
+            "NX_class": "NXedge",
+            "name": "K",
+        },
     }
     model_instance = NxXasModel(**data)
     model_instance.energy = [7, 7.1], "keV"
@@ -47,13 +65,25 @@ def _expected_content(nx_class, energy, intensity):
     return {
         "NX_class": nx_class,
         "definition": "NXxas",
-        "mode": "transmission",
-        "element": "Fe",
-        "absorption_edge": "K",
+        "mode": {
+            "NX_class": "NXxas_mode",
+            "name": "transmission",
+            "emission_lines": None,
+        },
+        "element": {
+            "NX_class": "NXelement",
+            "symbol": "Fe",
+            "atomic_number": None,
+        },
+        "edge": {
+            "NX_class": "NXedge",
+            "name": "K",
+        },
         "energy": energy,
         "intensity": intensity,
         "title": "Fe K (transmission)",
         "instrument": None,
+        "calculated": False,
         "plot": {
             "NX_class": "NXdata",
             "axes": [

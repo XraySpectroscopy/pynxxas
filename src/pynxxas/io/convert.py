@@ -38,7 +38,6 @@ def convert_files(
             if output_format == "nexus":
                 output_url = f"{output_filename}?path=/dataset{scan_number:02}"
                 if model_out.NX_class == "NXsubentry":
-                    breakpoint()
                     output_url = f"{output_url}/{model_out.mode.replace(' ', '_')}"
             else:
                 basename = f"{output_filename.stem}_{scan_number:02}"

@@ -8,7 +8,7 @@ from ..io.convert import convert_files
 logger = logging.getLogger(__name__)
 
 
-def main(argv=None) -> int:
+def main(argv=None) -> None:
     if argv is None:
         argv = sys.argv
 

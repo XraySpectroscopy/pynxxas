@@ -3,6 +3,8 @@ from typing import Generator
 from .. import XdiModel
 from .. import NxXasModel
 
+from ..nexus import NxXasMode
+
 
 def to_nxxas(xdi_model: XdiModel) -> Generator[NxXasModel, None, None]:
     has_mu = xdi_model.data.mutrans is not None or xdi_model.data.normtrans is not None
@@ -12,10 +14,10 @@ def to_nxxas(xdi_model: XdiModel) -> Generator[NxXasModel, None, None]:
     if not has_mu and not has_fluo:
         return
 
-    data = {
-        "element": xdi_model.element.symbol,
-        "absorption_edge": xdi_model.element.edge,
-    }
+    data = {}
+    data["edge"] = {"name": xdi_model.element.edge}
+
+    data["element"] = {"symbol": xdi_model.element.symbol}
 
     if has_mu and has_fluo:
         data["NX_class"] = "NXsubentry"
@@ -33,7 +35,8 @@ def to_nxxas(xdi_model: XdiModel) -> Generator[NxXasModel, None, None]:
         data["instrument"] = {"name": name}
 
     if has_mu:
-        nxxas_model = NxXasModel(mode="transmission", **data)
+        nxxas_mode = NxXasMode(name="transmission")
+        nxxas_model = NxXasModel(mode=nxxas_mode, **data)
         nxxas_model.energy = xdi_model.data.energy
         if xdi_model.data.mutrans is not None:
             nxxas_model.intensity = xdi_model.data.mutrans
@@ -42,7 +45,8 @@ def to_nxxas(xdi_model: XdiModel) -> Generator[NxXasModel, None, None]:
         yield nxxas_model
 
     if has_fluo:
-        nxxas_model = NxXasModel(mode="fluorescence yield", **data)
+        nxxas_mode = NxXasMode(name="fy")
+        nxxas_model = NxXasModel(mode=nxxas_mode, **data)
         nxxas_model.energy = xdi_model.data.energy
         if xdi_model.data.mufluor is not None:
             nxxas_model.intensity = xdi_model.data.mufluor
@@ -54,10 +58,10 @@ def to_nxxas(xdi_model: XdiModel) -> Generator[NxXasModel, None, None]:
 def from_nxxas(nxxas_model: NxXasModel) -> Generator[XdiModel, None, None]:
     xdi_model = XdiModel()
     xdi_model.element.symbol = nxxas_model.element
-    xdi_model.element.edge = nxxas_model.absorption_edge
+    xdi_model.element.edge = nxxas_model.edge
     xdi_model.data.energy = nxxas_model.energy
-    if nxxas_model.mode == "transmission":
+    if nxxas_model.mode.name == "transmission":
         xdi_model.data.mutrans = nxxas_model.intensity
-    elif nxxas_model.mode == "fluorescence yield":
+    elif nxxas_model.mode.name == "fy":
         xdi_model.data.mufluor = nxxas_model.intensity
     yield xdi_model

@@ -4,16 +4,16 @@ from math import log10
 from charset_normalizer import from_bytes
 
 
-MAX_FILESIZE = 100*1024*1024  # 100 Mb limit
-COMMENTCHARS = '#;%*!$'
+MAX_FILESIZE = 100 * 1024 * 1024  # 100 Mb limit
+COMMENTCHARS = "#;%*!$"
 
-VALID_CHARS1 = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_'
+VALID_CHARS1 = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
 
-BAD_FILECHARS = ';~,`!%$@$&^?*#:"/|\'\\\t\r\n (){}[]<>'
-GOOD_FILECHARS = '_'*len(BAD_FILECHARS)
+BAD_FILECHARS = ";~,`!%$@$&^?*#:\"/|'\\\t\r\n (){}[]<>"
+GOOD_FILECHARS = "_" * len(BAD_FILECHARS)
 
-BAD_VARSCHARS = BAD_FILECHARS + '=+-.'
-GOOD_VARSCHARS = '_'*len(BAD_VARSCHARS)
+BAD_VARSCHARS = BAD_FILECHARS + "=+-."
+GOOD_VARSCHARS = "_" * len(BAD_VARSCHARS)
 
 TRANS_FILE = str.maketrans(BAD_FILECHARS, GOOD_FILECHARS)
 TRANS_VARS = str.maketrans(BAD_VARSCHARS, GOOD_VARSCHARS)
@@ -24,12 +24,13 @@ def fix_varname(s):
     t = str(s).translate(TRANS_VARS)
 
     if len(t) < 1:
-        t = '_var_'
+        t = "_var_"
     if t[0] not in VALID_CHARS1:
-        t = '_%s' % t
-    while t.endswith('_'):
+        t = "_%s" % t
+    while t.endswith("_"):
         t = t[:-1]
     return t
+
 
 def read_textfile(filename, size=None):
     """read text from a file as string
@@ -51,20 +52,19 @@ def read_textfile(filename, size=None):
        splitting on '\n' will give a list of lines.
     3. if filename is given, it can be a gzip-compressed file
     """
-    text = ''
+    text = ""
 
     def decode(bytedata):
         return str(from_bytes(bytedata).best())
 
     if isinstance(filename, io.IOBase):
         text = filename.read(size)
-        if filename.mode == 'rb':
+        if filename.mode == "rb":
             text = decode(text)
     else:
-        with open(filename, 'rb') as fh:
+        with open(filename, "rb") as fh:
             text = decode(fh.read(size))
-    return text.replace('\r\n', '\n').replace('\r', '\n')
-
+    return text.replace("\r\n", "\n").replace("\r", "\n")
 
 
 def gformat(val, length=11):
@@ -107,9 +107,11 @@ def gformat(val, length=11):
     ab_expon = abs(expon)
     if ab_expon > 99:
         prec -= 1
-    elif ((expon >= 0 and expon < (prec+4))
-          or (expon <= -1 and -expon < (prec-2))
-          or (expon <= -1 and prec < 5 and abs(expon)<3 )):
+    elif (
+        (expon >= 0 and expon < (prec + 4))
+        or (expon <= -1 and -expon < (prec - 2))
+        or (expon <= -1 and prec < 5 and abs(expon) < 3)
+    ):
         form = "f"
         prec += 4
         if expon > 0:
@@ -123,7 +125,7 @@ def gformat(val, length=11):
         return out
 
     prec += 1
-    out = "_"*(length+2)
+    out = "_" * (length + 2)
     while len(out) > length:
         prec -= 1
         out = fmt(val, length, prec, form)
@@ -134,9 +136,10 @@ def gformat(val, length=11):
         out = fmt(val, length, prec, form)
     return out
 
+
 def test_gformat():
     for x in range(-10, 12):
-        for a in [0.2124312134, 0.54364253, 0.812312, .96341312124, 1.028456789]:
-            v = a*(10**(x))
+        for a in [0.2124312134, 0.54364253, 0.812312, 0.96341312124, 1.028456789]:
+            v = a * (10 ** (x))
             for len in (14, 13, 12, 11, 10, 9, 8):
-                print(gformat(v, length=len) )
+                print(gformat(v, length=len))
