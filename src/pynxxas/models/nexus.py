@@ -103,6 +103,7 @@ class NxXasModel(NxClass, NxGroup, nx_class="NXxas"):
     mode: NxXasMode
     element: NxElement
     edge: NxEdge
+    calculated: bool = False
     energy: units.PydanticQuantity = units.as_quantity([])
     intensity: units.PydanticQuantity = units.as_quantity([])
     title: Optional[str] = None
