@@ -50,6 +50,7 @@ def kekpf2nexus(filename, nxroot, entry_name="entry", metadata=None):
             coldata.append(dat.data[i, :])
 
     root = create_nxclass(nxroot, entry_name, "NXentry", default="plot")
+    nxroot.attrs["default"] = entry_name
     root["definition"] = "NXxas"
 
     root["mode"] = "fluorescence"

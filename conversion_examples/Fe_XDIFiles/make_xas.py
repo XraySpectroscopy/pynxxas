@@ -31,6 +31,7 @@ def xdi2nexus(filename, nxroot, entry_name="entry", data_mode="transmission"):
     rawdata[:, 3] = dat.i0 * 1.0
 
     root = create_nxclass(nxroot, entry_name, "NXentry", default="plot")
+    nxroot.attrs["default"] = entry_name
     root["definition"] = "NXxas"
 
     root["mode"] = "transmission"
