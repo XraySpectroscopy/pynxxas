@@ -51,7 +51,7 @@ class NxLinkModel(pydantic.BaseModel):
     target_filename: Optional[str] = None
 
 
-class NxDataModel(NxClass, NxGroup, nx_class="NXdata"):
+class NxDataModel(NxClass, NxGroup, nx_class="NxData"):
     NX_class: Literal["NXdata"] = pydantic.Field(default="NXdata", alias="@NX_class")
     signal: Literal["intensity"] = pydantic.Field(default="intensity", alias="@signal")
     axes: List[str] = pydantic.Field(default=["energy"], alias="@axes")
@@ -64,14 +64,14 @@ class NxInstrumentName(NxField):
     short_name: Optional[str] = pydantic.Field(alias="@short_name")
 
 
-class NxInstrument(NxClass, NxGroup, nx_class="NXinstrument"):
+class NxInstrument(NxClass, NxGroup, nx_class="NxInstrument"):
     NX_class: Literal["NXinstrument"] = pydantic.Field(
         default="NXinstrument", alias="@NX_class"
     )
     name: Optional[NxInstrumentName] = None
 
 
-class NxElement(NxClass, NxGroup, nx_class="NXelement"):
+class NxElement(NxClass, NxGroup, nx_class="NxElement"):
     NX_class: Literal["NXelement"] = pydantic.Field(
         default="NXelement", alias="@NX_class"
     )
@@ -84,7 +84,7 @@ class NxEntryClass(StrEnum):
     NXsubentry = "NXsubentry"
 
 
-class NxXasMode(NxClass, NxGroup, nx_class="NXxas_mode"):
+class NxXasMode(NxClass, NxGroup, nx_class="NxXasMode"):
     NX_class: Literal["NXxas_mode"] = pydantic.Field(
         default="NXxas_mode", alias="@NX_class"
     )
@@ -92,12 +92,12 @@ class NxXasMode(NxClass, NxGroup, nx_class="NXxas_mode"):
     emission_lines: Optional[XRayLines] = None
 
 
-class NxEdge(NxClass, NxGroup, nx_class="NXedge"):
+class NxEdge(NxClass, NxGroup, nx_class="NxEdge"):
     NX_class: Literal["NXedge"] = pydantic.Field(default="NXedge", alias="@NX_class")
     name: Optional[XRayEdge] = None
 
 
-class NxXasModel(NxClass, NxGroup, nx_class="NXxas"):
+class NxXasModel(NxClass, NxGroup, nx_class="NxXas"):
     NX_class: NxEntryClass = pydantic.Field(default="NXentry", alias="@NX_class")
     definition: Literal["NXxas"] = "NXxas"
     mode: NxXasMode
