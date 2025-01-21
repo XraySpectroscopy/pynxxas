@@ -83,6 +83,7 @@ def _expected_content(nx_class, energy, intensity):
         "intensity": intensity,
         "title": "Fe K (transmission)",
         "instrument": None,
+        "calculated": False,
         "plot": {
             "NX_class": "NXdata",
             "axes": [
