@@ -24,9 +24,9 @@ XRAY_LINES = ("K-L1",)
 XAS_MODES = ("transmission", "fy")
 # fmt: on
 
+AtomicSymbol = StrEnum("AtomicSymbol", {s: s for s in ATOMIC_SYMBOLS})
 XRayEdge = StrEnum("XRayEdge", {s: s for s in XRAY_EDGES})
 XasMode = StrEnum("XRayMode", {s: s for s in XAS_MODES})
-Symbol = StrEnum("Symbol", {s: s for s in ATOMIC_SYMBOLS})
 
 
 class NxGroup(pydantic.BaseModel, extra="allow"):
@@ -74,7 +74,7 @@ class NxElement(NxClass, NxGroup, nx_class="NXelement"):
     NX_class: Literal["NXelement"] = pydantic.Field(
         default="NXelement", alias="@NX_class"
     )
-    symbol: Optional[Symbol] = None
+    symbol: Optional[AtomicSymbol] = None
     atomic_number: Optional[int] = None
 
 
