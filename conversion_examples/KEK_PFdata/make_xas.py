@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
 
+import h5py
 import numpy
-from nexusformat import nexus
 from larch.xafs import pre_edge
 from larch.io import read_ascii, write_ascii
 from larch.utils import gformat
@@ -49,36 +49,40 @@ def kekpf2nexus(filename, nxroot, entry_name="entry", metadata=None):
             array_labels.append(label)
             coldata.append(dat.data[i, :])
 
-    root = nxroot[entry_name] = nexus.NXentry()
-    root.attrs["default"] = "plot"
+    root = create_nxclass(nxroot, entry_name, "NXentry", default="plot")
     root["definition"] = "NXxas"
+
     root["mode"] = "fluorescence"
-    root["element"] = meta["element"]["symbol"]
-    root["absorption_edge"] = meta["element"]["edge"]
+
     root["energy"] = dat.energy
     root["energy"].attrs["units"] = "eV"
     root["intensity"] = dat.norm
 
-    plot = root["plot"] = nexus.NXdata()
-    plot["energy"] = root["energy"]
-    plot["intensity"] = root["intensity"]
-    plot.attrs["signal"] = "intensity"
-    plot.attrs["axes"] = "energy"
+    element = create_nxclass(root, "element", "NXelement")
+    element["symbol"] = meta["element"]["symbol"]
+
+    edge = create_nxclass(root, "edge", "NXedge")
+    edge["name"] = meta["element"]["edge"]
+
+    plot = create_nxclass(root, "plot", "NXdata", signal="intensity", axes="energy")
+    plot["energy"] = h5py.SoftLink(root["energy"].name)
+    plot["intensity"] = h5py.SoftLink(root["intensity"].name)
     plot["energy"].attrs["units"] = "eV"
     plot["energy"].attrs["long_name"] = "Energy (eV)"
     plot["intensity"].attrs["long_name"] = "Normalized mu(E)"
 
     names = {}
 
-    #  sample
-    sample = root["sample"] = nexus.NXsample()
+    # sample
+    sample = create_nxclass(root, "sample", "NXsample")
     for aname, value in meta["sample"].items():
-        setattr(sample, aname, value)
+        sample[aname] = value
         if aname.lower() == "name":
             names["sample"] = value
+
     sample["prep"] = "unknown sample"
 
-    #  process
+    # process
     kwargs = []
     for k, v in dat.callargs.pre_edge.items():
         if v is not None:
@@ -139,9 +143,13 @@ def kekpf2nexus(filename, nxroot, entry_name="entry", metadata=None):
             j = j[1:].strip()
         header.append(j)
 
-    root["process"] = nexus.NXprocess(
-        program="xraylarch", version="0.9.80", notes=notes
-    )
+    process = create_nxclass(root, "process", "NXprocess")
+    process.attrs["NX_class"] = "NXprocess"
+    process["program"] = "xraylarch"
+    process["version"] = "0.9.80"
+    nts = create_nxclass(process, "notes", "NXnote")
+    nts["data"] = notes
+    nts["type"] = "text/plain"
 
     # rawdata
     root["rawdata"] = numpy.array(coldata).T
@@ -150,40 +158,40 @@ def kekpf2nexus(filename, nxroot, entry_name="entry", metadata=None):
     root["reference"] = "None"
 
     # scan
-    scan = root["scan"] = nexus.NXcollection()
-    scan.headers = json.dumps(meta)
-    scan.data_collector = "KEK PF BL9A"
-    scan.filename = filename.name
+    scan = create_nxclass(root, "scan", "NXparameters")
+    scan["headers"] = json.dumps(meta)
+    scan["data_collector"] = "KEK PF BL9A"
+    scan["filename"] = filename.name
 
     if "scan" in meta:
         for key, val in meta["scan"].items():
-            setattr(scan, key, val)
+            scan[key] = val
         if getattr(dat, "comments", None) is not None:
-            scan.comments = dat.comments
+            scan["comments"] = dat.comments
 
-    inst = root["instrument"] = nexus.NXinstrument()
+    inst = create_nxclass(root, "instrument", "NXinstrument")
 
-    source = inst["source"] = nexus.NXsource(
-        type="Synchrotron X-ray Source", probe="x-ray"
-    )
+    source = create_nxclass(inst, "source", "NXsource")
+    source["type"] = "Synchrotron X-ray Source"
+    source["probe"] = "x-ray"
 
     if "facility" in meta:
         for aname, value in meta["facility"].items():
             if aname.lower() == "energy":
                 words = value.split(maxsplit=1)
                 en_value = float(words[0])
-                source.energy = en_value
+                source["energy"] = en_value
                 if len(words) > 1:
-                    source.energy.attrs["units"] = words[1]
+                    source["energy"].attrs["units"] = words[1]
             else:
-                setattr(source, aname, value)
+                source[aname] = value
                 if aname.lower() == "name":
                     names["facility"] = value
 
     if "beamline" in meta:
-        bl = inst["beamline"] = nexus.NXcollection()
+        bl = create_nxclass(inst, "beamline", "NXparameters")
         for aname, value in meta["beamline"].items():
-            setattr(bl, aname, value)
+            bl[aname] = value
             if aname.lower() == "name":
                 names["beamline"] = value
 
@@ -222,17 +230,22 @@ def kekpf2nexus(filename, nxroot, entry_name="entry", metadata=None):
             refl = (1, 1, 1)
         return mono_type, refl
 
+    monochromator = create_nxclass(inst, "monochromator", "NXmonochromator")
+    monochromator["energy"] = h5py.SoftLink(root["energy"].name)
+
+    crystal = create_nxclass(monochromator, "crystal", "NXcrystal")
     mono_type, refl = parse_mono_string(mono_name)
-    mono_crystal = nexus.NXcrystal(
-        type=mono_type, reflection=numpy.array(refl), d_spacing=d_spacing
-    )
+    crystal["type"] = mono_type
+    crystal["reflection"] = numpy.array(refl)
+    crystal["d_spacing"] = d_spacing
 
-    inst["monochromator"] = nexus.NXmonochromator(
-        energy=root["energy"], crystal=mono_crystal
-    )
+    i0 = create_nxclass(inst, "i0", "NXdetector")
+    i0["data"] = dat.i0
+    i0["description"] = "Ion Chamber"
 
-    inst["i0"] = nexus.NXdetector(data=dat.i0, description="Ion Chamber")
-    inst["ifluor"] = nexus.NXdetector(data=dat.ifluor, description="Ion Chamber")
+    ifluor = create_nxclass(inst, "ifluor", "NXdetector")
+    ifluor["data"] = dat.ifluor
+    ifluor["description"] = "Ion Chamber"
 
     outfile = filename.parent / (filename.stem + "_new" + filename.suffix)
 
@@ -241,23 +254,32 @@ def kekpf2nexus(filename, nxroot, entry_name="entry", metadata=None):
     print(f"done. Wrote group {entry_name} in file {outfile}")
 
 
+def create_nxclass(root, name, nx_class, **attrs):
+    """Create NeXus class instance with attributes."""
+    child = root.create_group(name)
+    child.attrs["NX_class"] = nx_class
+    for name, value in attrs.items():
+        child.attrs[name] = value
+    return child
+
+
 def main(output_filename):
-    nxroot = nexus.nxopen(output_filename, "w")
+    with h5py.File(output_filename, "w") as nxroot:
 
-    metadata = {
-        "sample": {"name": "fe010"},
-        "element": {"symbol": "Fe", "edge": "K"},
-        "monochromator": {"crystal": "Si 111", "d_spacing": 3.1551},
-        "facility": {"name": "Photon Factory", "beamline": "BL9A"},
-        "detector": {"i0": "20 cm, He", "ifluor": "Vortex ME-4"},
-    }
+        metadata = {
+            "sample": {"name": "fe010"},
+            "element": {"symbol": "Fe", "edge": "K"},
+            "monochromator": {"crystal": "Si 111", "d_spacing": 3.1551},
+            "facility": {"name": "Photon Factory", "beamline": "BL9A"},
+            "detector": {"i0": "20 cm, He", "ifluor": "Vortex ME-4"},
+        }
 
-    kekpf2nexus(
-        THIS_DIRECTORY / "PF9A_2022.dat",
-        nxroot,
-        entry_name="fe010",
-        metadata=metadata,
-    )
+        kekpf2nexus(
+            THIS_DIRECTORY / "PF9A_2022.dat",
+            nxroot,
+            entry_name="fe010",
+            metadata=metadata,
+        )
 
 
 if __name__ == "__main__":

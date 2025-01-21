@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
 
+import h5py
 import numpy
-from nexusformat import nexus
 from larch.xafs import pre_edge
 from larch.io import read_xdi, read_ascii, write_ascii
 from larch.utils import gformat
@@ -30,22 +30,24 @@ def xdi2nexus(filename, nxroot, entry_name="entry", data_mode="transmission"):
     rawdata[:, 2] = (dat.itrans * 10.0).astype("int32") / 10.0
     rawdata[:, 3] = dat.i0 * 1.0
 
-    root = nxroot[entry_name] = nexus.NXentry()
-
+    root = create_nxclass(nxroot, entry_name, "NXentry", default="plot")
     root["definition"] = "NXxas"
+
     root["mode"] = "transmission"
-    root["element"] = dat.attrs["element"]["symbol"]
-    root["absorption_edge"] = dat.attrs["element"]["edge"]
+
     root["energy"] = dat.energy
     root["energy"].attrs["units"] = "eV"
     root["intensity"] = dat.norm
-    root.attrs["default"] = "plot"
 
-    plot = root["plot"] = nexus.NXdata()
-    plot["energy"] = root["energy"]
-    plot["intensity"] = root["intensity"]
-    plot.attrs["signal"] = "intensity"
-    plot.attrs["axes"] = "energy"
+    element = create_nxclass(root, "element", "NXelement")
+    element["symbol"] = dat.attrs["element"]["symbol"]
+
+    edge = create_nxclass(root, "edge", "NXedge")
+    edge["name"] = dat.attrs["element"]["edge"]
+
+    plot = create_nxclass(root, "plot", "NXdata", signal="intensity", axes="energy")
+    plot["energy"] = h5py.SoftLink(root["energy"].name)
+    plot["intensity"] = h5py.SoftLink(root["intensity"].name)
     plot["energy"].attrs["units"] = "eV"
     plot["energy"].attrs["long_name"] = "Energy (eV)"
     plot["intensity"].attrs["long_name"] = "Normalized mu(E)"
@@ -53,13 +55,13 @@ def xdi2nexus(filename, nxroot, entry_name="entry", data_mode="transmission"):
     names = {}
 
     # sample
-    sample = nexus.NXsample(chemical_formula="Fe")
+    sample = create_nxclass(root, "sample", "NXsample")
     for aname, value in dat.attrs["sample"].items():
-        setattr(sample, aname, value)
+        sample[aname] = value
         if aname.lower() == "name":
             names["sample"] = value
 
-    #  process
+    # process
     kwargs = ", ".join([f"{k}={v}" for k, v in dat.callargs.pre_edge.items()])
 
     preline = f"pre_edge = {gformat(pre_offset, 12)} + {gformat(pre_slope, 12)}*energy"
@@ -109,9 +111,13 @@ def xdi2nexus(filename, nxroot, entry_name="entry", data_mode="transmission"):
             j = j[1:].strip()
         header.append(j)
 
-    root["process"] = nexus.NXprocess(
-        program="xraylarch", version="0.9.80", notes=notes
-    )
+    process = create_nxclass(root, "process", "NXprocess")
+    process.attrs["NX_class"] = "NXprocess"
+    process["program"] = "xraylarch"
+    process["version"] = "0.9.80"
+    nts = create_nxclass(process, "notes", "NXnote")
+    nts["data"] = notes
+    nts["type"] = "text/plain"
 
     # rawdata
     array_labels = json.dumps(["energy", "intensity", "itrans", "i0"])
@@ -121,39 +127,38 @@ def xdi2nexus(filename, nxroot, entry_name="entry", data_mode="transmission"):
     root["reference"] = "None"
 
     # scan
-    scan = root["scan"] = nexus.NXcollection()
-    scan.attrs["data_collector"] = "Matthew Newville"
-    scan.attrs["filename"] = filename.name
-
-    scan.headers = json.dumps(dat.attrs)
+    scan = create_nxclass(root, "scan", "NXparameters")
+    scan["headers"] = json.dumps(dat.attrs)
+    scan["data_collector"] = "Matthew Newville"
+    scan["filename"] = filename.name
 
     for key, val in dat.attrs["scan"].items():
-        setattr(scan, key, val)
+        scan[key] = val
     if getattr(dat, "comments", None) is not None:
-        scan.comments = dat.comments
+        scan["comments"] = dat.comments
 
-    inst = root["instrument"] = nexus.NXinstrument()
+    inst = create_nxclass(root, "instrument", "NXinstrument")
 
-    source = inst["source"] = nexus.NXsource(
-        type="Synchrotron X-ray Source", probe="x-ray"
-    )
+    source = create_nxclass(inst, "source", "NXsource")
+    source["type"] = "Synchrotron X-ray Source"
+    source["probe"] = "x-ray"
 
     if "facility" in dat.attrs:
         for aname, value in dat.attrs["facility"].items():
             if aname.lower() == "energy":
                 words = value.split(maxsplit=1)
                 en_value = float(words[0])
-                source.energy = en_value
+                source["energy"] = en_value
                 if len(words) > 1:
-                    source.energy.attrs["units"] = words[1]
+                    source["energy"].attrs["units"] = words[1]
             else:
-                setattr(source, aname, value)
+                source[aname] = value
                 if aname.lower() == "name":
                     names["facility"] = value
 
-    bl = inst["beamline"] = nexus.NXcollection()
+    bl = create_nxclass(inst, "beamline", "NXparameters")
     for aname, value in dat.attrs["beamline"].items():
-        setattr(bl, aname, value)
+        bl[aname] = value
         if aname.lower() == "name":
             names["beamline"] = value
 
@@ -191,19 +196,22 @@ def xdi2nexus(filename, nxroot, entry_name="entry", data_mode="transmission"):
             refl = (1, 1, 1)
         return mono_type, refl
 
+    monochromator = create_nxclass(inst, "monochromator", "NXmonochromator")
+    monochromator["energy"] = h5py.SoftLink(root["energy"].name)
+
+    crystal = create_nxclass(monochromator, "crystal", "NXcrystal")
     mono_type, refl = parse_mono_string(mono_name)
-    mono_crystal = nexus.NXcrystal(
-        type=mono_type, reflection=numpy.array(refl), d_spacing=d_spacing
-    )
+    crystal["type"] = mono_type
+    crystal["reflection"] = numpy.array(refl)
+    crystal["d_spacing"] = d_spacing
 
-    inst["monochromator"] = nexus.NXmonochromator(
-        energy=root["energy"], crystal=mono_crystal
-    )
+    i0 = create_nxclass(inst, "i0", "NXdetector")
+    i0["data"] = dat.i0
+    i0["description"] = dat.attrs["detector"]["i0"]
 
-    inst["i0"] = nexus.NXdetector(data=dat.i0, description=dat.attrs["detector"]["i0"])
-    inst["itrans"] = nexus.NXdetector(
-        data=dat.itrans, description=dat.attrs["detector"]["i1"]
-    )
+    itrans = create_nxclass(inst, "itrans", "NXdetector")
+    itrans["data"] = dat.itrans
+    itrans["description"] = dat.attrs["detector"]["i1"]
 
     outfile = filename.parent / (filename.stem + "_new.xdi")
     write_ascii(
@@ -219,12 +227,20 @@ def xdi2nexus(filename, nxroot, entry_name="entry", data_mode="transmission"):
     print(f"done. Wrote group {entry_name} in file {outfile}")
 
 
-def main(output_filename):
-    nxroot = nexus.nxopen(output_filename, "w")
+def create_nxclass(root, name, nx_class, **attrs):
+    """Create NeXus class instance with attributes."""
+    child = root.create_group(name)
+    child.attrs["NX_class"] = nx_class
+    for name, value in attrs.items():
+        child.attrs[name] = value
+    return child
 
-    xdi2nexus(THIS_DIRECTORY / "fe_metal_rt.xdi", nxroot, entry_name="fe_metal")
-    xdi2nexus(THIS_DIRECTORY / "fe2o3_rt.xdi", nxroot, entry_name="fe2o3")
-    xdi2nexus(THIS_DIRECTORY / "feo_rt1.xdi", nxroot, entry_name="feo")
+
+def main(output_filename):
+    with h5py.File(output_filename, "w") as nxroot:
+        xdi2nexus(THIS_DIRECTORY / "fe_metal_rt.xdi", nxroot, entry_name="fe_metal")
+        xdi2nexus(THIS_DIRECTORY / "fe2o3_rt.xdi", nxroot, entry_name="fe2o3")
+        xdi2nexus(THIS_DIRECTORY / "feo_rt1.xdi", nxroot, entry_name="feo")
 
 
 if __name__ == "__main__":
