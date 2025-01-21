@@ -47,5 +47,13 @@ KEK_PF: 1 data file from Photon Factory, KEK.  Fluorescence XAFS,
 MultiElementFluor:  12 data files (XDI-ish) for V K-edge fluorescence XAFS
       using a 4-element detector.  The original files have columns saved
       for "V Ka" and a "Dead-time Correction Factor" for MCAs 1 through 4.
-      The script sums the deadtime-corrected chanbels to make "ifluor".
+      The script sums the deadtime-corrected channels to make "ifluor".
       V_XANES_nexus.h5
+
+BlissMultiModal:  HDF5 EXAFS data at the As K-edge in transmission and fluorescene.
+      Multiple EXAFS channels are recorded at the same time.
+      - energy_enc: energy in keV
+      - p201_1_bkg_sub: I0
+      - p201_3_bkg_sub: I1
+      - p201_5_bkg_sub: I2
+      - xmapd16_det<i>: MCA with "roi1" as the fluorescence signal of interest
