@@ -7,7 +7,6 @@ from larch.xafs import pre_edge
 from larch.io import read_xdi, read_ascii, write_ascii
 from larch.utils import gformat
 
-
 THIS_DIRECTORY = Path(__file__).parent
 
 
@@ -19,7 +18,6 @@ def xdi2nexus(
     chan1=14,
     icr1=None,
     ocr1=None,
-    data_mode="fluorescence",
     metadata=None,
 ):
 
@@ -308,29 +306,25 @@ def main(output_filename):
 
         call_kws = dict(nchans=4, chan1=14, icr1=22, ocr1=None, metadata=metadata)
 
-        for fname in (
-            "V_XANES_ap1.001",
-            "V_XANES_ap2.001",
-            "V_XANES_ap3.001",
-            "V_XANES_ap4.001",
-            "V_XANES_ap5.001",
-            "V_XANES_ap6.001",
-            "V_XANES_ap7.001",
-            "V_XANES_ap8.001",
-            "V_XANES_ap9.001",
-            "V_XANES_ap10.001",
-            "V_XANES_ap11.001",
-            "V_XANES_ap12.001",
-        ):
-            entry_name = fname.replace(".001", "")
+        entry_name = "V_XANES"
+
+        nxroot.attrs["default"] = entry_name
+
+        for det_nr in range(1, 13):
+            det_name = f"ap{det_nr}"
+            fname = f"V_XANES_{det_name}.001"
+            entry_name = f"V_XANES_{det_name}"
+
+            nxentry = create_nxclass(nxroot, entry_name, "NXentry", default="plot")
+            nxroot.attrs["default"] = entry_name
 
             xdi2nexus(
                 THIS_DIRECTORY / fname,
-                nxroot,
+                nxentry,
                 entry_name=entry_name,
                 **call_kws,
             )
 
 
 if __name__ == "__main__":
-    main(THIS_DIRECTORY / ".." / ".." / "converted" / "V_XANES_nexus.h5")
+    main(THIS_DIRECTORY / ".." / ".." / "nxxas_examples" / f"{THIS_DIRECTORY.name}.h5")

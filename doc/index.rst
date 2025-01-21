@@ -5,10 +5,10 @@ Library for reading and writing XAS data in `NeXus format <https://www.nexusform
 
 Example HDF5 files can be inspected here:
 
-- :myhdf5:`Buildin supported <example_nxxas_data.h5>`
-- :myhdf5:`Fe XAS APS <fe_xas_nexus.h5>`
-- :myhdf5:`Fe XAS KEK <Fe_XAS_PF9A_nexus.h5>`
-- :myhdf5:`V XANES APS <V_XANES_nexus.h5>`
+- :myhdf5:`Buildin supported <generic.h5>`
+- :myhdf5:`Fe XAS APS (transmission) <Fe_XDIFiles.h5>`
+- :myhdf5:`Fe XAS KEK (fluorescence) <KEK_PFdata.h5>`
+- :myhdf5:`V XANES APS (multi-detector fluorescence) <MultiElementFluor.h5>`
 
 .. toctree::
     :hidden:

@@ -284,4 +284,4 @@ def main(output_filename):
 
 
 if __name__ == "__main__":
-    main(THIS_DIRECTORY / ".." / ".." / "converted" / "Fe_XAS_PF9A_nexus.h5")
+    main(THIS_DIRECTORY / ".." / ".." / "nxxas_examples" / f"{THIS_DIRECTORY.name}.h5")

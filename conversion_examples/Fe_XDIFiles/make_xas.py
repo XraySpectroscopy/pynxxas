@@ -10,7 +10,7 @@ from larch.utils import gformat
 THIS_DIRECTORY = Path(__file__).parent
 
 
-def xdi2nexus(filename, nxroot, entry_name="entry", data_mode="transmission"):
+def xdi2nexus(filename, nxroot, entry_name="entry"):
     asc = read_ascii(filename)
     dat = read_xdi(str(filename))
 
@@ -245,4 +245,4 @@ def main(output_filename):
 
 
 if __name__ == "__main__":
-    main(THIS_DIRECTORY / ".." / ".." / "converted" / "fe_xas_nexus.h5")
+    main(THIS_DIRECTORY / ".." / ".." / "nxxas_examples" / f"{THIS_DIRECTORY.name}.h5")

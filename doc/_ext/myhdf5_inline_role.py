@@ -54,7 +54,7 @@ def inject_dynamic_url_js(app, pagename, templatename, context, doctree):
 def generate_example_nxxas_data(app, config):
     try:
         repo_root = Path(app.srcdir)
-        output_filename = repo_root / "_static" / "example_nxxas_data.h5"
+        output_filename = repo_root / "_static" / "generic.h5"
         file_pattern1 = repo_root / ".." / "xdi_files" / "*"
         file_pattern2 = repo_root / ".." / "xas_beamline_data" / "*"
         convert_files(
