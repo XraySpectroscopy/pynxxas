@@ -19,13 +19,14 @@ XRAY_EDGES = ("K", "L1", "L2", "L3", "M1", "M2", "M3", "M4", "M5",
               "N1", "N2", "M3", "N4", "N5", "N6", "N7",
               "O1", "O2", "O3", "P1", "P2", "P3")
 
-XRAY_LINES = ("K-L1",)
+XRAY_LINES = ("K-L1", "K-L2", "K-L3", "K-M1", "K-M2", "K-M3")
 
 XAS_MODES = ("transmission", "fy")
 # fmt: on
 
 AtomicSymbol = StrEnum("AtomicSymbol", {s: s for s in ATOMIC_SYMBOLS})
 XRayEdge = StrEnum("XRayEdge", {s: s for s in XRAY_EDGES})
+XRayLines = StrEnum("XRayLines", {s: s for s in XRAY_LINES})
 XasMode = StrEnum("XRayMode", {s: s for s in XAS_MODES})
 
 
@@ -88,6 +89,7 @@ class NxXasMode(NxClass, NxGroup, nx_class="NXxas_mode"):
         default="NXxas_mode", alias="@NX_class"
     )
     name: Optional[XasMode] = None
+    emission_lines: Optional[XRayLines] = None
 
 
 class NxEdge(NxClass, NxGroup, nx_class="NXedge"):

@@ -68,6 +68,7 @@ def _expected_content(nx_class, energy, intensity):
         "mode": {
             "NX_class": "NXxas_mode",
             "name": "transmission",
+            "emission_lines": None,
         },
         "element": {
             "NX_class": "NXelement",
