@@ -22,9 +22,15 @@ def nxxas_model():
 
 
 _NXXAS_CONTENT = {
-    "element": "Co",
     "edge": "K",
-    "mode": "transmission",
+    "mode": {
+        "@NX_class": "NXxas_mode",
+        "name": "transmission",
+    },
+    "element": {
+        "@NX_class": "NXelement",
+        "symbol": "Co",
+    },
     "energy": [[7509, 7519], "eV"],
     "intensity": [[-0.51329170, -0.78493490], ""],
 }

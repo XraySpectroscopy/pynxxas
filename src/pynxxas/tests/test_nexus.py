@@ -25,8 +25,14 @@ def test_nxxas():
 
 def test_nxxas_defaults():
     data = {
-        "mode": "transmission",
-        "element": "Fe",
+        "mode": {
+            "@NX_class": "NXxas_mode",
+            "name": "transmission",
+        },
+        "element": {
+            "@NX_class": "NXelement",
+            "symbol": "Fe",
+        },
         "edge": "K",
     }
     model_instance = NxXasModel(**data)
@@ -37,8 +43,14 @@ def test_nxxas_defaults():
 
 def test_nxxas_fill_data():
     data = {
-        "mode": "transmission",
-        "element": "Fe",
+        "mode": {
+            "@NX_class": "NXxas_mode",
+            "name": "transmission",
+        },
+        "element": {
+            "@NX_class": "NXelement",
+            "symbol": "Fe",
+        },
         "edge": "K",
     }
     model_instance = NxXasModel(**data)
