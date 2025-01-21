@@ -124,4 +124,6 @@ class NxXasModel(NxClass, NxGroup, nx_class="NxXas"):
         return self
 
     def has_data(self) -> bool:
+        if self.energy is None or self.intensity is None:
+            return False
         return bool(self.energy.size and self.intensity.size)

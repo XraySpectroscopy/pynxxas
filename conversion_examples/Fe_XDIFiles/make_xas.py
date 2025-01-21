@@ -7,12 +7,12 @@ from larch.xafs import pre_edge
 from larch.io import read_xdi, read_ascii, write_ascii
 from larch.utils import gformat
 
+THIS_DIRECTORY = Path(__file__).parent
+
 
 def xdi2nexus(filename, nxroot, entry_name="entry", data_mode="transmission"):
-
     asc = read_ascii(filename)
-    dat = read_xdi(filename)
-    filename = Path(filename).name
+    dat = read_xdi(str(filename))
 
     dat.energy
     dat.mu = dat.mutrans * 1.0
@@ -123,7 +123,7 @@ def xdi2nexus(filename, nxroot, entry_name="entry", data_mode="transmission"):
     # scan
     scan = root["scan"] = nexus.NXcollection()
     scan.attrs["data_collector"] = "Matthew Newville"
-    scan.attrs["filename"] = filename
+    scan.attrs["filename"] = filename.name
 
     scan.headers = json.dumps(dat.attrs)
 
@@ -158,7 +158,7 @@ def xdi2nexus(filename, nxroot, entry_name="entry", data_mode="transmission"):
             names["beamline"] = value
 
     title_words = [
-        names.get("sample", filename),
+        names.get("sample", filename.name),
         names.get("facility", ""),
         names.get("beamline", ""),
     ]
@@ -205,7 +205,7 @@ def xdi2nexus(filename, nxroot, entry_name="entry", data_mode="transmission"):
         data=dat.itrans, description=dat.attrs["detector"]["i1"]
     )
 
-    outfile = filename.replace(".xdi", "_new.xdi")
+    outfile = filename.parent / (filename.stem + "_new.xdi")
     write_ascii(
         outfile,
         dat.energy,
@@ -216,12 +216,16 @@ def xdi2nexus(filename, nxroot, entry_name="entry", data_mode="transmission"):
         label="energy           norm             itrans           i0",
     )
 
-    print("done ", entry_name)
+    print(f"done. Wrote group {entry_name} in file {outfile}")
 
 
-################
-nxroot = nexus.nxopen("fe_xas_nexus.h5", "w")
+def main(output_filename):
+    nxroot = nexus.nxopen(output_filename, "w")
 
-xdi2nexus("fe_metal_rt.xdi", nxroot, entry_name="fe_metal")
-xdi2nexus("fe2o3_rt.xdi", nxroot, entry_name="fe2o3")
-xdi2nexus("feo_rt1.xdi", nxroot, entry_name="feo")
+    xdi2nexus(THIS_DIRECTORY / "fe_metal_rt.xdi", nxroot, entry_name="fe_metal")
+    xdi2nexus(THIS_DIRECTORY / "fe2o3_rt.xdi", nxroot, entry_name="fe2o3")
+    xdi2nexus(THIS_DIRECTORY / "feo_rt1.xdi", nxroot, entry_name="feo")
+
+
+if __name__ == "__main__":
+    main(THIS_DIRECTORY / ".." / ".." / "converted" / "fe_xas_nexus.h5")

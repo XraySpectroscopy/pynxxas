@@ -7,6 +7,7 @@ from larch.xafs import pre_edge
 from larch.io import read_ascii, write_ascii
 from larch.utils import gformat
 
+THIS_DIRECTORY = Path(__file__).parent
 
 PLANCK_HC = 12398.419843320027
 DEG2RAD = 0.017453292519943295
@@ -24,7 +25,6 @@ def kekpf2nexus(filename, nxroot, entry_name="entry", metadata=None):
             for k, v in vf.items():
                 meta[kf.lower()][k.lower()] = v
 
-    print(meta)
     monod = meta["monochromator"]["d_spacing"]
 
     dat.energy = PLANCK_HC / (2 * monod * numpy.sin(DEG2RAD * (dat.data[0, :])))
@@ -153,7 +153,7 @@ def kekpf2nexus(filename, nxroot, entry_name="entry", metadata=None):
     scan = root["scan"] = nexus.NXcollection()
     scan.headers = json.dumps(meta)
     scan.data_collector = "KEK PF BL9A"
-    scan.filename = filename
+    scan.filename = filename.name
 
     if "scan" in meta:
         for key, val in meta["scan"].items():
@@ -188,7 +188,7 @@ def kekpf2nexus(filename, nxroot, entry_name="entry", metadata=None):
                 names["beamline"] = value
 
     title_words = [
-        names.get("sample", filename),
+        names.get("sample", filename.name),
         names.get("facility", ""),
         names.get("beamline", ""),
     ]
@@ -234,24 +234,31 @@ def kekpf2nexus(filename, nxroot, entry_name="entry", metadata=None):
     inst["i0"] = nexus.NXdetector(data=dat.i0, description="Ion Chamber")
     inst["ifluor"] = nexus.NXdetector(data=dat.ifluor, description="Ion Chamber")
 
-    fpath = Path(filename)
-    outfile = fpath.stem + "_new" + fpath.suffix
+    outfile = filename.parent / (filename.stem + "_new" + filename.suffix)
 
     write_ascii(outfile, *coldata, header=header, label=collabel)
 
-    print(f"done. Wrote group {entry_name} and file {outfile}")
+    print(f"done. Wrote group {entry_name} in file {outfile}")
 
 
-################
+def main(output_filename):
+    nxroot = nexus.nxopen(output_filename, "w")
 
-metadata = {
-    "sample": {"name": "fe010"},
-    "element": {"symbol": "Fe", "edge": "K"},
-    "monochromator": {"crystal": "Si 111", "d_spacing": 3.1551},
-    "facility": {"name": "Photon Factory", "beamline": "BL9A"},
-    "detector": {"i0": "20 cm, He", "ifluor": "Vortex ME-4"},
-}
+    metadata = {
+        "sample": {"name": "fe010"},
+        "element": {"symbol": "Fe", "edge": "K"},
+        "monochromator": {"crystal": "Si 111", "d_spacing": 3.1551},
+        "facility": {"name": "Photon Factory", "beamline": "BL9A"},
+        "detector": {"i0": "20 cm, He", "ifluor": "Vortex ME-4"},
+    }
 
-nxroot = nexus.nxopen("Fe_XAS_PF9A_nexus.h5", "w")
+    kekpf2nexus(
+        THIS_DIRECTORY / "PF9A_2022.dat",
+        nxroot,
+        entry_name="fe010",
+        metadata=metadata,
+    )
 
-kekpf2nexus("PF9A_2022.dat", nxroot, entry_name="fe010", metadata=metadata)
+
+if __name__ == "__main__":
+    main(THIS_DIRECTORY / ".." / ".." / "converted" / "Fe_XAS_PF9A_nexus.h5")

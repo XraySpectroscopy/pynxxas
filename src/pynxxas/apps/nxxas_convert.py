@@ -32,6 +32,13 @@ def main(argv=None) -> None:
     )
 
     parser.add_argument(
+        "-w",
+        "--overwrite",
+        action="store_true",
+        help="Overwrite the output file",
+    )
+
+    parser.add_argument(
         "output_filename", type=str, help="Convert destination filename"
     )
 
@@ -39,7 +46,10 @@ def main(argv=None) -> None:
     logging.basicConfig()
 
     convert_files(
-        args.file_patterns, args.output_filename, args.output_format, interactive=True
+        args.file_patterns,
+        args.output_filename,
+        args.output_format,
+        overwrite=args.overwrite,
     )
 
 

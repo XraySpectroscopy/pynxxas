@@ -8,6 +8,9 @@ from larch.io import read_xdi, read_ascii, write_ascii
 from larch.utils import gformat
 
 
+THIS_DIRECTORY = Path(__file__).parent
+
+
 def xdi2nexus(
     filename,
     nxroot,
@@ -21,8 +24,7 @@ def xdi2nexus(
 ):
 
     asc = read_ascii(filename)
-    dat = read_xdi(filename)
-    filename = Path(filename).name
+    dat = read_xdi(str(filename))
 
     meta = {}
     for kf, vf in dat.attrs.items():
@@ -55,8 +57,6 @@ def xdi2nexus(
         dat.ifluor += c
         fluor_str.append(s)
     fluor_str = "+".join(fluor_str)
-
-    print(fluor_str)
 
     dat.mu = dat.ifluor / dat.i0
 
@@ -188,7 +188,7 @@ def xdi2nexus(
     scan = root["scan"] = nexus.NXcollection()
     scan.headers = json.dumps(meta)
     scan.data_collector = "Tony Lanzirotti"
-    scan.filename = filename
+    scan.filename = filename.name
 
     for key, val in meta["scan"].items():
         setattr(scan, key, val)
@@ -221,13 +221,12 @@ def xdi2nexus(
             names["beamline"] = value
 
     title_words = [
-        names.get("sample", filename),
+        names.get("sample", filename.name),
         names.get("facility", ""),
         names.get("beamline", ""),
     ]
     root["title"] = (" ".join(title_words)).strip()
 
-    # mono
     mono_meta = meta.get("monochromator", meta.get("mono", {}))
     d_spacing = mono_meta.get("d_spacing", 3.14770)
     mono_name = mono_meta.get("name", "Si 111")
@@ -269,43 +268,49 @@ def xdi2nexus(
         data=dat.ifluor, description="ME-4 Fluorescence Detector"
     )
 
-    fpath = Path(filename)
-    outfile = fpath.stem + "_new" + fpath.suffix
+    outfile = filename.parent / (filename.stem + "_new" + filename.suffix)
 
     write_ascii(outfile, *coldata, header=header, label=collabel)
 
     print(f"done. Wrote group {entry_name} and file {outfile}")
 
 
-################
+def main(output_filename):
+    nxroot = nexus.nxopen(output_filename, "w")
 
-metadata = {
-    "sample": {"name": "apophyllite"},
-    "element": {"symbol": "V", "edge": "K"},
-    "mono": {"crystal": "Si 111", "d_spacing": 3.13477},
-    "facility": {"name": "APS", "beamline": "13-ID-E"},
-    "detector": {"i0": "20 cm, He", "ifluor": "Vortex ME-4"},
-}
+    metadata = {
+        "sample": {"name": "apophyllite"},
+        "element": {"symbol": "V", "edge": "K"},
+        "mono": {"crystal": "Si 111", "d_spacing": 3.13477},
+        "facility": {"name": "APS", "beamline": "13-ID-E"},
+        "detector": {"i0": "20 cm, He", "ifluor": "Vortex ME-4"},
+    }
 
-call_kws = dict(nchans=4, chan1=14, icr1=22, ocr1=None, metadata=metadata)
+    call_kws = dict(nchans=4, chan1=14, icr1=22, ocr1=None, metadata=metadata)
+
+    for fname in (
+        "V_XANES_ap1.001",
+        "V_XANES_ap2.001",
+        "V_XANES_ap3.001",
+        "V_XANES_ap4.001",
+        "V_XANES_ap5.001",
+        "V_XANES_ap6.001",
+        "V_XANES_ap7.001",
+        "V_XANES_ap8.001",
+        "V_XANES_ap9.001",
+        "V_XANES_ap10.001",
+        "V_XANES_ap11.001",
+        "V_XANES_ap12.001",
+    ):
+        entry_name = fname.replace(".001", "")
+
+        xdi2nexus(
+            THIS_DIRECTORY / fname,
+            nxroot,
+            entry_name=entry_name,
+            **call_kws,
+        )
 
 
-nxroot = nexus.nxopen("V_XANES_nexus.h5", "w")
-
-for fname in (
-    "V_XANES_ap1.001",
-    "V_XANES_ap2.001",
-    "V_XANES_ap3.001",
-    "V_XANES_ap4.001",
-    "V_XANES_ap5.001",
-    "V_XANES_ap6.001",
-    "V_XANES_ap7.001",
-    "V_XANES_ap8.001",
-    "V_XANES_ap9.001",
-    "V_XANES_ap10.001",
-    "V_XANES_ap11.001",
-    "V_XANES_ap12.001",
-):
-    entry_name = fname.replace(".001", "")
-
-    xdi2nexus(fname, nxroot, entry_name=entry_name, **call_kws)
+if __name__ == "__main__":
+    main(THIS_DIRECTORY / ".." / ".." / "converted" / "V_XANES_nexus.h5")
