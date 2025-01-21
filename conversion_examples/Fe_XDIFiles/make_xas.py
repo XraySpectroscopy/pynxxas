@@ -1,8 +1,8 @@
-from nexusformat import nexus
-from pathlib import Path
-import h5py
 import json
-import numpy as np
+from pathlib import Path
+
+import numpy
+from nexusformat import nexus
 from larch.xafs import pre_edge
 from larch.io import read_xdi, read_ascii, write_ascii
 from larch.utils import gformat
@@ -24,7 +24,7 @@ def xdi2nexus(filename, nxroot, entry_name="entry", data_mode="transmission"):
     pre_slope = dat.pre_edge_details.pre_slope
     nvict = dat.pre_edge_details.nvict
 
-    rawdata = np.zeros((len(dat.energy), 4), dtype="float64")
+    rawdata = numpy.zeros((len(dat.energy), 4), dtype="float64")
     rawdata[:, 0] = dat.energy
     rawdata[:, 1] = dat.norm
     rawdata[:, 2] = (dat.itrans * 10.0).astype("int32") / 10.0
@@ -187,13 +187,13 @@ def xdi2nexus(filename, nxroot, entry_name="entry", data_mode="transmission"):
                 refl = (refl[0], refl[1], refl[2])
 
             refl = [int(w.strip()) for w in refl]
-        except:
+        except Exception:
             refl = (1, 1, 1)
         return mono_type, refl
 
     mono_type, refl = parse_mono_string(mono_name)
     mono_crystal = nexus.NXcrystal(
-        type=mono_type, reflection=np.array(refl), d_spacing=d_spacing
+        type=mono_type, reflection=numpy.array(refl), d_spacing=d_spacing
     )
 
     inst["monochromator"] = nexus.NXmonochromator(

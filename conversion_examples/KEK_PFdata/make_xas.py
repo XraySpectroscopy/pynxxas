@@ -1,10 +1,10 @@
-from nexusformat import nexus
-from pathlib import Path
-import h5py
 import json
-import numpy as np
+from pathlib import Path
+
+import numpy
+from nexusformat import nexus
 from larch.xafs import pre_edge
-from larch.io import read_xdi, read_ascii, write_ascii
+from larch.io import read_ascii, write_ascii
 from larch.utils import gformat
 
 
@@ -27,9 +27,8 @@ def kekpf2nexus(filename, nxroot, entry_name="entry", metadata=None):
     print(meta)
     monod = meta["monochromator"]["d_spacing"]
 
-    dat.energy = PLANCK_HC / (2 * monod * np.sin(DEG2RAD * (dat.data[0, :])))
+    dat.energy = PLANCK_HC / (2 * monod * numpy.sin(DEG2RAD * (dat.data[0, :])))
     dat.mu = dat.ifluor / dat.i0
-    ncolumns = len(dat.array_labels) + 3
 
     pre_edge(dat, pre1=-150, pre2=-50, norm1=150, norm2=750)
     pre_offset = dat.pre_edge_details.pre_offset
@@ -145,7 +144,7 @@ def kekpf2nexus(filename, nxroot, entry_name="entry", metadata=None):
     )
 
     # rawdata
-    root["rawdata"] = np.array(coldata).T
+    root["rawdata"] = numpy.array(coldata).T
     root["rawdata"].attrs["array_labels"] = json.dumps(array_labels)
 
     root["reference"] = "None"
@@ -219,13 +218,13 @@ def kekpf2nexus(filename, nxroot, entry_name="entry", metadata=None):
                 refl = (refl[0], refl[1], refl[2])
 
             refl = [int(w.strip()) for w in refl]
-        except:
+        except Exception:
             refl = (1, 1, 1)
         return mono_type, refl
 
     mono_type, refl = parse_mono_string(mono_name)
     mono_crystal = nexus.NXcrystal(
-        type=mono_type, reflection=np.array(refl), d_spacing=d_spacing
+        type=mono_type, reflection=numpy.array(refl), d_spacing=d_spacing
     )
 
     inst["monochromator"] = nexus.NXmonochromator(

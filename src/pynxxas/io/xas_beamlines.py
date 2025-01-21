@@ -28,7 +28,6 @@ By default, that header will defined all the text before the data table.
 
 """
 
-import numpy as np
 from .utils import fix_varname
 
 
@@ -224,7 +223,7 @@ class APS12BM_BeamlineData(GenericBeamlineData):
                 pref, suff = word.split("_")
                 isint = False
                 try:
-                    ipref = int(pref)
+                    _ = int(pref)
                     isint = True
                 except ValueError:
                     pass
@@ -321,7 +320,7 @@ class APSXSD_BeamlineData(GenericBeamlineData):
                             for o in range(1, 4):
                                 try:
                                     _ = int(line[z - o])
-                                except:
+                                except Exception:
                                     break
                             z = z - o + 1
                         val = line[j + 1 : z].strip()
@@ -331,7 +330,7 @@ class APSXSD_BeamlineData(GenericBeamlineData):
                         try:
                             key = int(key)
                             maxkey = max(maxkey, key)
-                        except:
+                        except Exception:
                             break
                         tmplabels[key] = val
 
