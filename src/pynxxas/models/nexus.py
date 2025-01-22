@@ -1,6 +1,6 @@
 """NeXus data model_instance"""
 
-from typing import Dict, Literal, List, Optional, Any
+from typing import Dict, Literal, List, Optional, Any, get_args
 
 import pydantic
 
@@ -83,6 +83,16 @@ class NxElement(NxClass, NxGroup, nx_class="NxElement"):
     )
     symbol: Optional[AtomicSymbol] = None
     atomic_number: Optional[int] = None
+
+    @pydantic.model_validator(mode="after")
+    def check_atomic_number(self) -> "NxXasModel":
+        if self.symbol is not None and self.atomic_number is not None:
+            atomic_number = get_args(AtomicSymbol).index(self.symbol) + 1
+            if self.atomic_number != atomic_number:
+                raise ValueError(
+                    f"The atomic number of '{self.symbol}' is {atomic_number} not {self.atomic_number}"
+                )
+        return self
 
 
 class NxXasMode(NxClass, NxGroup, nx_class="NxXasMode"):
