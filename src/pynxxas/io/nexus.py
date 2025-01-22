@@ -3,11 +3,6 @@
 
 from typing import Generator, Any, Tuple
 
-try:
-    from enum import StrEnum
-except ImportError:
-    from strenum import StrEnum
-
 
 import h5py
 import pint
@@ -86,8 +81,6 @@ def _save_dataset(nxparent: h5py.Group, field_name: str, field_value: Any) -> No
         for attr_name, attr, attr_value in _iter_model_fields(field_value):
             if attr.alias and attr.alias.startswith("@"):
                 nxparent[field_name].attrs[attr_name] = attr_value
-    elif isinstance(field_value, StrEnum):
-        nxparent[field_name] = str(field_value)
     elif isinstance(field_value, pint.Quantity):
         if field_value.size:
             nxparent[field_name] = field_value.magnitude
@@ -104,10 +97,7 @@ def _save_dataset(nxparent: h5py.Group, field_name: str, field_value: Any) -> No
 
 
 def _save_attribute(nxparent: h5py.Group, field_name: str, field_value: Any) -> None:
-    if isinstance(field_value, StrEnum):
-        nxparent.attrs[field_name] = str(field_value)
-    else:
-        nxparent.attrs[field_name] = field_value
+    nxparent.attrs[field_name] = field_value
 
 
 def _set_default(h5group: h5py.Group) -> None:
