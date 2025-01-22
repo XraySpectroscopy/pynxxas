@@ -1,6 +1,5 @@
-#!/usr/bin/env python
 """
-classes for handling XAFS data in plaintext column files for various beamlines.
+Classes for handling XAFS data in plaintext column files for various beamlines.
 
 
 Basically, a class for XAFS Beamline data. This defines
@@ -25,7 +24,6 @@ The XXX__BeamlineData class will be given *only* the headerlines (a list of line
 from the text file.
 
 By default, that header will defined all the text before the data table.
-
 """
 
 from .utils import fix_varname
