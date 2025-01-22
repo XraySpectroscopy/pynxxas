@@ -17,16 +17,14 @@ def convert_files(
     file_patterns: Iterator[str],
     output_filename: str,
     output_format: str,
-    interactive: bool = False,
+    overwrite: bool = False,
 ) -> int:
     model_type = models.MODELS[output_format]
 
     output_filename = pathlib.Path(output_filename)
     if output_filename.exists():
-        if interactive:
-            result = input(f"Overwrite {output_filename}? (y/[n])")
-            if not result.lower() in ("y", "yes"):
-                return 1
+        if not overwrite:
+            return 1
         output_filename.unlink()
     output_filename.parent.mkdir(parents=True, exist_ok=True)
 

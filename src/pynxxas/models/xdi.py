@@ -60,7 +60,6 @@ class XdiDetectorNamespace(XdiBaseModel):
         data = dict(data)
         for alias, target in XDI_ARRAY_ALIASES.items():
             if alias in data:
-                print("resolve aliase ", alias, target)
                 data[target] = data[alias]
         return data
 

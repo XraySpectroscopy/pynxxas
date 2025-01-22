@@ -9,10 +9,13 @@
 __pycache__/
 *.so
 
+# Temporary files
+/conversion_examples/*/*new*
+
 # Distribution / packaging
 /build/
 /dist/
 *.egg-info/
 .eggs/
 /doc/_generated
-/doc/_static/example_nxxas_data.h5
+/doc/_static/*.h5
