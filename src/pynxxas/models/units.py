@@ -3,12 +3,7 @@ import pydantic
 from pydantic_core import core_schema
 from pydantic.json_schema import JsonSchemaValue
 
-from typing import Any, Sequence, Union, List
-
-try:
-    from typing import Annotated
-except ImportError:
-    from typing_extensions import Annotated
+from typing import Any, Sequence, Union, List, Annotated
 
 _REGISTRY = pint.UnitRegistry()
 _REGISTRY.default_format = "~"  # unit symbols instead of full unit names
