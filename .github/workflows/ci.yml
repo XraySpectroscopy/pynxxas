@@ -35,7 +35,7 @@ jobs:
           pip install --pre .[test]
 
       - name: Run unit tests
-        run: pytest -v .
+        run: pytest -v -W error .
 
   build_docs:
     needs: build
