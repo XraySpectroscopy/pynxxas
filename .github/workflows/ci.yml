@@ -35,6 +35,9 @@ jobs:
           pip install --pre .[test]
 
       - name: Run unit tests
+        env:
+          PYTEST_ADDOPTS: > 
+            -W ignore::DeprecationWarning:pint.facets.plain.quantity 
         run: pytest -v -W error .
 
   build_docs:
