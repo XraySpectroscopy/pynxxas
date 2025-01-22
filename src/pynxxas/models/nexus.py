@@ -2,32 +2,34 @@
 
 from typing import Dict, Literal, List, Optional, Any
 
-try:
-    from enum import StrEnum
-except ImportError:
-    from strenum import StrEnum
-
 import pydantic
-import periodictable
 
 from . import units
 
 # fmt: off
-ATOMIC_SYMBOLS = [e.symbol for e in periodictable.elements][1:]
+AtomicSymbol = Literal[
+    "H", "He",
+    "Li", "Be", "B", "C", "N", "O", "F", "Ne",
+    "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar",
+    "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As", "Se", "Br", "Kr",
+    "Rb", "Sr", "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn", "Sb", "Te", "I", "Xe",
+    "Cs", "Ba", "La", "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu", "Hf", "Ta", "W", "Re", "Os", "Ir", "Pt", "Au", "Hg", "Tl", "Pb", "Bi", "Po", "At", "Rn",
+    "Fr", "Ra", "Ac", "Th", "Pa", "U", "Np", "Pu", "Am", "Cm", "Bk", "Cf", "Es", "Fm", "Md", "No", "Lr", "Rf", "Db", "Sg", "Bh", "Hs", "Mt", "Ds", "Rg", "Cn", "Nh", "Fl", "Mc", "Lv", "Ts", "Og"
+]
 
-XRAY_EDGES = ("K", "L1", "L2", "L3", "M1", "M2", "M3", "M4", "M5",
-              "N1", "N2", "M3", "N4", "N5", "N6", "N7",
-              "O1", "O2", "O3", "P1", "P2", "P3")
-
-XRAY_LINES = ("K-L1", "K-L2", "K-L3", "K-M1", "K-M2", "K-M3")
-
-XAS_MODES = ("transmission", "fy")
+XRayEdge = Literal[
+    "K",
+    "L1", "L2", "L3",
+    "M1", "M2", "M3", "M4", "M5",
+    "N1", "N2", "M3", "N4", "N5", "N6", "N7",
+    "O1", "O2", "O3",
+    "P1", "P2", "P3"
+]
 # fmt: on
 
-AtomicSymbol = StrEnum("AtomicSymbol", {s: s for s in ATOMIC_SYMBOLS})
-XRayEdge = StrEnum("XRayEdge", {s: s for s in XRAY_EDGES})
-XRayLines = StrEnum("XRayLines", {s: s for s in XRAY_LINES})
-XasMode = StrEnum("XRayMode", {s: s for s in XAS_MODES})
+XRayLines = Literal["K-L1", "K-L2", "K-L3", "K-M1", "K-M2", "K-M3"]
+
+XasMode = Literal["transmission", "fy"]
 
 
 class NxGroup(pydantic.BaseModel, extra="allow"):
@@ -79,11 +81,6 @@ class NxElement(NxClass, NxGroup, nx_class="NxElement"):
     atomic_number: Optional[int] = None
 
 
-class NxEntryClass(StrEnum):
-    NXentry = "NXentry"
-    NXsubentry = "NXsubentry"
-
-
 class NxXasMode(NxClass, NxGroup, nx_class="NxXasMode"):
     NX_class: Literal["NXxas_mode"] = pydantic.Field(
         default="NXxas_mode", alias="@NX_class"
@@ -98,7 +95,9 @@ class NxEdge(NxClass, NxGroup, nx_class="NxEdge"):
 
 
 class NxXasModel(NxClass, NxGroup, nx_class="NxXas"):
-    NX_class: NxEntryClass = pydantic.Field(default="NXentry", alias="@NX_class")
+    NX_class: Literal["NXentry", "NXsubentry"] = pydantic.Field(
+        default="NXentry", alias="@NX_class"
+    )
     definition: Literal["NXxas"] = "NXxas"
     mode: NxXasMode
     element: NxElement
