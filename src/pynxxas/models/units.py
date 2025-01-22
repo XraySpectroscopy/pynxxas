@@ -6,7 +6,7 @@ from pydantic.json_schema import JsonSchemaValue
 from typing import Any, Sequence, Union, List, Annotated
 
 _REGISTRY = pint.UnitRegistry()
-_REGISTRY.default_format = "~"  # unit symbols instead of full unit names
+_REGISTRY.formatter.default_format = "~"  # unit symbols instead of full unit names
 
 
 def as_quantity(value: Union[str, pint.Quantity, Sequence]) -> pint.Quantity:
