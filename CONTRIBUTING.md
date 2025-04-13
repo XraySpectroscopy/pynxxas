@@ -20,7 +20,7 @@ To be sure all HDF5 files are compliant with the latest standard
 
 ```bash
 pip install -e .[dev]
-./converted/generate.sh
+./nxxas_examples/generate.sh
 ```
 
 ### Linting

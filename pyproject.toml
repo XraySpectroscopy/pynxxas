@@ -3,3 +3,61 @@ requires = [
     "setuptools>=46.4"
 ]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "pynxxas"
+version = "0.0.1a"
+authors = [{name = "ESRF", email = "dau-pydev@esrf.fr"}]
+description = "Read and write XAS data in NeXus format"
+readme = {file = "README.md", content-type = "text/markdown"}
+license = {file = "LICENSE"}
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "numpy",
+    "h5py",
+    "pydantic >=2.6",
+    "pint >=0.24.4",
+    "charset_normalizer",
+]
+
+[project.urls]
+Homepage = "https://github.com/XraySpectroscopy/pynxxas/"
+Documentation = "https://pynxxas.readthedocs.io/"
+Repository = "https://github.com/XraySpectroscopy/pynxxas/"
+Issues = "https://github.com/XraySpectroscopy/pynxxas/issues"
+Changelog = "https://github.com/XraySpectroscopy/pynxxas/-/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+test = [
+    "pytest >=7",
+]
+dev = [
+    "pynxxas[test]",
+    "black >=22",
+    "flake8 >=4",
+    "xraylarch",
+]
+doc = [
+    "pynxxas[test]",
+    "sphinx >=4.5",
+    "sphinx-autodoc-typehints >=1.16",
+    "pydata-sphinx-theme < 0.15",
+    "xraylarch",
+]
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.coverage.run]
+omit = ['*/tests/*']
+
+[project.scripts]
+nxxas-convert = "pynxxas.apps.nxxas_convert:main"

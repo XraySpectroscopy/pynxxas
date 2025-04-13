@@ -6,13 +6,15 @@
 
 import os
 import sys
-from pynxxas import __version__ as release
+from importlib.metadata import version as get_version
+
+release = get_version("pynxxas")
 
 sys.path.append(os.path.abspath("./_ext"))
 
 project = "pynxxas"
 version = ".".join(release.split(".")[:2])
-copyright = "2024-present, ESRF"
+copyright = "2024-2025, ESRF"
 author = "ESRF"
 docstitle = f"{project} {version}"
 
