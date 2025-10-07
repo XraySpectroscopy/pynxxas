@@ -13,5 +13,5 @@ An example HDF5 file can be found [here](https://myhdf5.hdfgroup.org/view?url=ht
     <a href="https://github.com/psf/black" alt="Code Style">
         <img src="https://img.shields.io/badge/code%20style-black-000000.svg" /></a>
     <a href="https://myhdf5.hdfgroup.org/view?url=https%3A%2F%2Fpynxxas.readthedocs.io%2Fen%2Flatest%2F_static%2Fgeneric.h5" alt="NeXus">
-        <img src="https://raw.githubusercontent.com/nexusformat/wiki/master/public/favicon.ico" /></a>
+        <img src="https://raw.githubusercontent.com/nexusformat/definitions/refs/heads/main/common/favicon.ico" /></a>
 </p>
