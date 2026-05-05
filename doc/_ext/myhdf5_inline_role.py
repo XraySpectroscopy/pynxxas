@@ -1,8 +1,8 @@
+import importlib.util
+import logging
 import os
 import re
-import logging
 from glob import glob
-import importlib.util
 from pathlib import Path
 
 from docutils import nodes
@@ -55,14 +55,14 @@ def generate_example_nxxas_data(app, config):
     try:
         repo_root = Path(app.srcdir)
         output_filename = repo_root / "_static" / "converted.nx"
-        file_pattern1 = repo_root / ".." / "examples" /"auto" / "*"
-        file_pattern2 = repo_root / ".." / "examples" /"pending" / "*"
+        file_pattern1 = repo_root / ".." / "examples" / "auto" / "*"
+        file_pattern2 = repo_root / ".." / "examples" / "pending" / "*"
         convert_files(
             [str(file_pattern1), str(file_pattern2)], str(output_filename), "nexus"
         )
 
         script_paths = glob(
-            str(repo_root / ".." / "examples" /"manual" / "*" / "convert_to_nexus.py")
+            str(repo_root / ".." / "examples" / "manual" / "*" / "convert_to_nexus.py")
         )
         for script_path in script_paths:
             module_name = os.path.basename(os.path.dirname(script_path))
@@ -71,7 +71,7 @@ def generate_example_nxxas_data(app, config):
             output_filename = repo_root / "_static" / f"{module_name}.h5"
             module.main(output_filename)
     except Exception:
-        logging.exception("HDF5 file generate failed")
+        logging.exception("NeXus file generation failed.")
         raise
 
 
