@@ -11,7 +11,7 @@ __pycache__/
 *.so
 
 # Temporary files
-/conversion_examples/*/*new*
+/examples/manual/*/*new*
 
 # Distribution / packaging
 /build/
@@ -19,4 +19,5 @@ __pycache__/
 *.egg-info/
 .eggs/
 /doc/_generated
+/doc/_static/*.nx
 /doc/_static/*.h5
