@@ -5,15 +5,15 @@ Library for reading and writing XAS data in `NeXus format <https://www.nexusform
 
 Example HDF5 files with `NXxas` data
 
-- :myhdf5:`Native conversion supported <generic.h5>`
-- :myhdf5:`Fe XAS APS (transmission) <Fe_XDIFiles.h5>`
-- :myhdf5:`Fe XAS KEK (fluorescence) <KEK_PFdata.h5>`
-- :myhdf5:`V XANES APS (multi-detector fluorescence) <MultiElementFluor.h5>`
-- :myhdf5:`As XANES ESRF (transmission + reference + multi-detector fluorescence) <BlissMultiModal.h5>`
+- :myhdf5:`Native conversion supported <auto/converted.nx>`
+- :myhdf5:`Fe XAS APS (transmission) <manual/Fe_XDIFiles/converted.nx>`
+- :myhdf5:`Fe XAS KEK (fluorescence) <manual/KEK_PFdata/converted.nx>`
+- :myhdf5:`V XANES APS (multi-detector fluorescence) <manual/MultiElementFluor/converted.nx>`
+- :myhdf5:`As XANES ESRF (transmission + reference + multi-detector fluorescence) <manual/BlissMultiModal/converted.nx>`
 
 .. toctree::
     :hidden:
-    
+
     howtoguides
     tutorials
     api

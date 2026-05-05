@@ -54,11 +54,14 @@ def inject_dynamic_url_js(app, pagename, templatename, context, doctree):
 def generate_example_nxxas_data(app, config):
     try:
         repo_root = Path(app.srcdir)
-        output_filename = repo_root / "_static" / "converted.nx"
-        file_pattern1 = repo_root / ".." / "examples" / "auto" / "*"
-        file_pattern2 = repo_root / ".." / "examples" / "pending" / "*"
+        output_filename = repo_root / "_static" / "auto" / "converted.nx"
+        output_filename.parent.mkdir(parents=True, exist_ok=True)
+        file_pattern1 = repo_root / ".." / "examples" / "auto" / "*.xdi"
         convert_files(
-            [str(file_pattern1), str(file_pattern2)], str(output_filename), "nexus"
+            [str(file_pattern1)],
+            str(output_filename),
+            "nexus",
+            overwrite=True,
         )
 
         script_paths = glob(
@@ -68,7 +71,10 @@ def generate_example_nxxas_data(app, config):
             module_name = os.path.basename(os.path.dirname(script_path))
             module = import_file(module_name, script_path)
 
-            output_filename = repo_root / "_static" / f"{module_name}.h5"
+            output_filename = (
+                repo_root / "_static" / "manual" / module_name / "converted.nx"
+            )
+            output_filename.parent.mkdir(parents=True, exist_ok=True)
             module.main(output_filename)
     except Exception:
         logging.exception("NeXus file generation failed.")
