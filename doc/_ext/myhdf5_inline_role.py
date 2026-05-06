@@ -54,7 +54,7 @@ def inject_dynamic_url_js(app, pagename, templatename, context, doctree):
 def generate_example_nxxas_data(app, config):
     try:
         repo_root = Path(app.srcdir)
-        output_filename = repo_root / "_static" / "auto" / "converted.nx"
+        output_filename = repo_root / "_static" / "auto" / "converted.nxs"
         output_filename.parent.mkdir(parents=True, exist_ok=True)
         file_pattern1 = repo_root / ".." / "examples" / "auto" / "*.xdi"
         convert_files(
@@ -72,7 +72,7 @@ def generate_example_nxxas_data(app, config):
             module = import_file(module_name, script_path)
 
             output_filename = (
-                repo_root / "_static" / "manual" / module_name / "converted.nx"
+                repo_root / "_static" / "manual" / module_name / "converted.nxs"
             )
             output_filename.parent.mkdir(parents=True, exist_ok=True)
             module.main(output_filename)

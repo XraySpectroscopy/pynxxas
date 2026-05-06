@@ -111,4 +111,4 @@ def main(output_filename):
 
 
 if __name__ == "__main__":
-    main(THIS_DIRECTORY / "converted.nx")
+    main(THIS_DIRECTORY / "converted.nxs")
