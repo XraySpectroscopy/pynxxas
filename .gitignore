@@ -12,6 +12,7 @@ __pycache__/
 
 # Temporary files
 /examples/manual/*/*new*
+/examples/**/*.nxs
 
 # Distribution / packaging
 /build/
