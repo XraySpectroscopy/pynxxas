@@ -36,7 +36,7 @@ text files, and do basic processing (including pre-edge subtraction and
 normalization) into pynxxas.
 
 Folders and Files (so far):
-=============================
+===========================
 
 Fe_XDIFiles:  3 XDI files (all Fe K edge, transmission XAFS)
       are put into a single nexus file.
