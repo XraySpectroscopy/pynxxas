@@ -2,7 +2,7 @@ These examples ilustrate early attempts to convert "raw" or "as collected" beaml
 into HDF5/NeXuS NXxas groups, and also into "new style" XDI files that map directly to
 the NXxas groups.
 
-There files here are essentially built "by hand", using a "make_xas.py" script
+There files here are essentially built "by hand", using a "convert_to_nexus.py" script
 in each folder.  This is meant to be a proof-of-principle, and to allow for
 discussion about these formats.  These examples are also meant to drive the
 development of pynxxas and NXxas definition.
@@ -29,14 +29,14 @@ For all datasets:
    "normalized mu(E)".  That is, the data shape is identical to the output
    XDI file.
 
-The "make_xas.py" scripts are not very sophisticated and are not meant for real
+The "convert_to_nexus.py" scripts are not very sophisticated and are not meant for real
 use in pynnxas, but more of a guide of what operations and steps to do.  Also,
 the intention is to *not* rely on xraylarch, but to port code to robustly read
 text files, and do basic processing (including pre-edge subtraction and
 normalization) into pynxxas.
 
 Folders and Files (so far):
-=============================
+===========================
 
 Fe_XDIFiles:  3 XDI files (all Fe K edge, transmission XAFS)
       are put into a single nexus file.

@@ -1,8 +1,8 @@
+import importlib.util
+import logging
 import os
 import re
-import logging
 from glob import glob
-import importlib.util
 from pathlib import Path
 
 from docutils import nodes
@@ -54,24 +54,30 @@ def inject_dynamic_url_js(app, pagename, templatename, context, doctree):
 def generate_example_nxxas_data(app, config):
     try:
         repo_root = Path(app.srcdir)
-        output_filename = repo_root / "_static" / "generic.h5"
-        file_pattern1 = repo_root / ".." / "xdi_files" / "*"
-        file_pattern2 = repo_root / ".." / "xas_beamline_data" / "*"
+        output_filename = repo_root / "_static" / "auto" / "converted.nxs"
+        output_filename.parent.mkdir(parents=True, exist_ok=True)
+        file_pattern1 = repo_root / ".." / "examples" / "auto" / "*.xdi"
         convert_files(
-            [str(file_pattern1), str(file_pattern2)], str(output_filename), "nexus"
+            [str(file_pattern1)],
+            str(output_filename),
+            "nexus",
+            overwrite=True,
         )
 
         script_paths = glob(
-            str(repo_root / ".." / "conversion_examples" / "*" / "make_xas.py")
+            str(repo_root / ".." / "examples" / "manual" / "*" / "convert_to_nexus.py")
         )
         for script_path in script_paths:
             module_name = os.path.basename(os.path.dirname(script_path))
             module = import_file(module_name, script_path)
 
-            output_filename = repo_root / "_static" / f"{module_name}.h5"
+            output_filename = (
+                repo_root / "_static" / "manual" / module_name / "converted.nxs"
+            )
+            output_filename.parent.mkdir(parents=True, exist_ok=True)
             module.main(output_filename)
     except Exception:
-        logging.exception("HDF5 file generate failed")
+        logging.exception("NeXus file generation failed.")
         raise
 
 

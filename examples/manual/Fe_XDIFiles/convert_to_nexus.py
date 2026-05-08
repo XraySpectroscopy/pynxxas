@@ -245,4 +245,4 @@ def main(output_filename):
 
 
 if __name__ == "__main__":
-    main(THIS_DIRECTORY / ".." / ".." / "nxxas_examples" / f"{THIS_DIRECTORY.name}.h5")
+    main(THIS_DIRECTORY / "converted.nxs")

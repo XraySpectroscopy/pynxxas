@@ -1,7 +1,7 @@
 # pynxxas
 Library for reading and writing XAS data in NeXus format.
 
-An example HDF5 file can be found [here](https://myhdf5.hdfgroup.org/view?url=https%3A%2F%2Fpynxxas.readthedocs.io%2Fen%2Flatest%2F_static%2Fgeneric.h5)
+An example HDF5 file can be found [here](https://myhdf5.hdfgroup.org/view?url=https%3A%2F%2Fpynxxas.readthedocs.io%2Fen%2Flatest%2F_static%2Fauto%2Fconverted.nx)
 
 <p align="center">
     <a href="https://pynxxas.readthedocs.io" alt="Documentation">
