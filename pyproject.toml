@@ -68,6 +68,9 @@ select = [
 # The formatter sets the line length. Docstrings and strings can be longer.
 ignore = ["E501"]
 
+[tool.ruff.lint.isort]
+force-single-line = true
+
 [tool.coverage.run]
 omit = ['*/tests/*']
 
