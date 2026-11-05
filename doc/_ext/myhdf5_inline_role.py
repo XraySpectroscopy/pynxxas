@@ -79,7 +79,7 @@ def generate_example_nxxas_data(app, config):
         )
         for script_path in script_paths:
             module_name = os.path.basename(os.path.dirname(script_path))
-            output_filename = static_dir / "manual" / module_name / "converted.nxs"
+            output_filename = static_dir / "manual" / module_name / f"{module_name}.nxs"
             with _convert(output_filename, static_dir):
                 module = import_file(module_name, script_path)
                 module.main(output_filename)
@@ -90,7 +90,7 @@ def generate_example_nxxas_data(app, config):
 
 @contextlib.contextmanager
 def _convert(output_filename, static_dir):
-    """Log one line for each conversion."""
+    """Log one line for each conversion, like examples/convert_to_nexus.sh."""
     label = f"{output_filename.relative_to(static_dir)!s:<50}"
     output_filename.parent.mkdir(parents=True, exist_ok=True)
     try:
