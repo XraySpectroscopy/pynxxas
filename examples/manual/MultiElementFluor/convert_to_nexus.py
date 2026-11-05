@@ -1,3 +1,5 @@
+import contextlib
+import io
 import json
 from pathlib import Path
 
@@ -281,9 +283,11 @@ def xdi2nexus(
 
     outfile = filename.parent / (filename.stem + "_new" + filename.suffix)
 
-    write_ascii(outfile, *coldata, header=header, label=collabel)
+    # write_ascii always prints the name of the file that it writes.
+    with contextlib.redirect_stdout(io.StringIO()):
+        write_ascii(outfile, *coldata, header=header, label=collabel)
 
-    print(f"done. Wrote group {entry_name} in file {outfile}")
+    print(f"Wrote group {entry_name} in file {outfile}")
 
 
 def create_nxclass(root, name, nx_class, **attrs):

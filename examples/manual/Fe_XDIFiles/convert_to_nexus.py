@@ -1,3 +1,5 @@
+import contextlib
+import io
 import json
 from pathlib import Path
 
@@ -216,17 +218,19 @@ def xdi2nexus(filename, nxroot, entry_name="entry"):
     itrans["description"] = dat.attrs["detector"]["i1"]
 
     outfile = filename.parent / (filename.stem + "_new.xdi")
-    write_ascii(
-        outfile,
-        dat.energy,
-        dat.norm,
-        dat.itrans,
-        dat.i0,
-        header=header,
-        label="energy           norm             itrans           i0",
-    )
+    # write_ascii always prints the name of the file that it writes.
+    with contextlib.redirect_stdout(io.StringIO()):
+        write_ascii(
+            outfile,
+            dat.energy,
+            dat.norm,
+            dat.itrans,
+            dat.i0,
+            header=header,
+            label="energy           norm             itrans           i0",
+        )
 
-    print(f"done. Wrote group {entry_name} in file {outfile}")
+    print(f"Wrote group {entry_name} in file {outfile}")
 
 
 def create_nxclass(root, name, nx_class, **attrs):
