@@ -35,17 +35,21 @@ def inject_dynamic_url_js(app, pagename, templatename, context, doctree):
     if app.builder.name != "html" or doctree is None:
         return
 
-    script = """
+    # Relative path from this page to _static, for example "../_static/".
+    static_path = context["pathto"]("_static/", 1)
+
+    script = f"""
     <script>
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", function() {{
         var links = document.querySelectorAll("a.myhdf5");
-        var currentURL = window.location.href.replace("index.html", "");
-        var resourceURL = encodeURIComponent(currentURL + "_static/");
-        links.forEach(function(link) {
+        // Resolve against the page URL so that "#anchor", "?query" and subpages work.
+        var staticURL = new URL("{static_path}", window.location.href).href;
+        var resourceURL = encodeURIComponent(staticURL);
+        links.forEach(function(link) {{
             var href = link.getAttribute("href");
             link.setAttribute("href", href.replace("placeholder", resourceURL));
-        });
-    });
+        }});
+    }});
     </script>
     """
 
