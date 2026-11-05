@@ -1,6 +1,6 @@
 [build-system]
 requires = [
-    "setuptools>=46.4"
+    "setuptools>=77"
 ]
 build-backend = "setuptools.build_meta"
 
@@ -10,10 +10,10 @@ version = "0.0.1.dev0"
 authors = [{name = "ESRF", email = "dau-pydev@esrf.fr"}]
 description = "Read and write XAS data in NeXus format"
 readme = {file = "README.md", content-type = "text/markdown"}
-license = {file = "LICENSE"}
+license = "MIT"
+license-files = ["LICENSE"]
 classifiers = [
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
 ]
 requires-python = ">=3.10"
