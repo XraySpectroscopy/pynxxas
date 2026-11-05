@@ -38,8 +38,7 @@ test = [
 ]
 dev = [
     "pynxxas[test]",
-    "black >=22",
-    "flake8 >=4",
+    "ruff",
     "xraylarch",
 ]
 doc = [
@@ -55,6 +54,19 @@ package-dir = { "" = "src" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "C4",  # flake8-comprehensions
+    "B",   # flake8-bugbear
+]
+# The formatter sets the line length. Docstrings and strings can be longer.
+ignore = ["E501"]
 
 [tool.coverage.run]
 omit = ['*/tests/*']
