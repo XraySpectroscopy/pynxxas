@@ -1,15 +1,16 @@
+from collections.abc import Sequence
+from typing import Annotated, Any
+
 import pint
 import pydantic
-from pydantic_core import core_schema
 from pydantic.json_schema import JsonSchemaValue
-
-from typing import Any, Sequence, Union, List, Annotated
+from pydantic_core import core_schema
 
 _REGISTRY = pint.UnitRegistry()
 _REGISTRY.formatter.default_format = "~"  # unit symbols instead of full unit names
 
 
-def as_quantity(value: Union[str, pint.Quantity, Sequence]) -> pint.Quantity:
+def as_quantity(value: str | pint.Quantity | Sequence) -> pint.Quantity:
     if isinstance(value, pint.Quantity):
         return value
     if (
@@ -23,7 +24,7 @@ def as_quantity(value: Union[str, pint.Quantity, Sequence]) -> pint.Quantity:
     return _REGISTRY.Quantity(value, units)
 
 
-def as_units(value: Union[str, pint.Unit]) -> pint.Unit:
+def as_units(value: str | pint.Unit) -> pint.Unit:
     if isinstance(value, pint.Unit):
         return value
     return _REGISTRY.parse_units(value)
@@ -38,7 +39,7 @@ class _QuantityPydanticAnnotation:
         _source_type: Any,
         _handler: pydantic.GetCoreSchemaHandler,
     ) -> core_schema.CoreSchema:
-        def serialize(value: Any) -> List:
+        def serialize(value: Any) -> list:
             value = as_quantity(value)
             return [value.magnitude.tolist(), str(value.units)]
 

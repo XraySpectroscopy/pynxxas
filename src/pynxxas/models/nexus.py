@@ -1,6 +1,6 @@
 """NeXus data model_instance"""
 
-from typing import Dict, Literal, List, Optional, Any, get_args
+from typing import Any, ClassVar, Literal, get_args
 
 import pydantic
 
@@ -45,7 +45,7 @@ class NxField(pydantic.BaseModel):
 
 
 class NxClass:
-    _NXCLASSES: Dict[str, "NxClass"] = dict()
+    _NXCLASSES: ClassVar[dict[str, "NxClass"]] = {}
 
     def __init_subclass__(cls, nx_class: str, **kwargs):
         super().__init_subclass__(**kwargs)
@@ -54,35 +54,35 @@ class NxClass:
 
 class NxLinkModel(pydantic.BaseModel):
     target_name: str
-    target_filename: Optional[str] = None
+    target_filename: str | None = None
 
 
 class NxDataModel(NxClass, NxGroup, nx_class="NxData"):
     NX_class: Literal["NXdata"] = pydantic.Field(default="NXdata", alias="@NX_class")
     signal: Literal["intensity"] = pydantic.Field(default="intensity", alias="@signal")
-    axes: List[str] = pydantic.Field(default=["energy"], alias="@axes")
+    axes: list[str] = pydantic.Field(default=["energy"], alias="@axes")
     energy: NxLinkModel
     intensity: NxLinkModel
 
 
 class NxInstrumentName(NxField):
-    value: Optional[str]
-    short_name: Optional[str] = pydantic.Field(alias="@short_name")
+    value: str | None
+    short_name: str | None = pydantic.Field(alias="@short_name")
 
 
 class NxInstrument(NxClass, NxGroup, nx_class="NxInstrument"):
     NX_class: Literal["NXinstrument"] = pydantic.Field(
         default="NXinstrument", alias="@NX_class"
     )
-    name: Optional[NxInstrumentName] = None
+    name: NxInstrumentName | None = None
 
 
 class NxElement(NxClass, NxGroup, nx_class="NxElement"):
     NX_class: Literal["NXelement"] = pydantic.Field(
         default="NXelement", alias="@NX_class"
     )
-    symbol: Optional[AtomicSymbol] = None
-    atomic_number: Optional[int] = None
+    symbol: AtomicSymbol | None = None
+    atomic_number: int | None = None
 
     @pydantic.model_validator(mode="after")
     def check_atomic_number(self) -> "NxXasModel":
@@ -99,13 +99,13 @@ class NxXasMode(NxClass, NxGroup, nx_class="NxXasMode"):
     NX_class: Literal["NXxas_mode"] = pydantic.Field(
         default="NXxas_mode", alias="@NX_class"
     )
-    name: Optional[XasMode] = None
-    emission_lines: Optional[XRayLines] = None
+    name: XasMode | None = None
+    emission_lines: XRayLines | None = None
 
 
 class NxEdge(NxClass, NxGroup, nx_class="NxEdge"):
     NX_class: Literal["NXedge"] = pydantic.Field(default="NXedge", alias="@NX_class")
-    name: Optional[XRayEdge] = None
+    name: XRayEdge | None = None
 
 
 class NxXasModel(NxClass, NxGroup, nx_class="NxXas"):
@@ -116,12 +116,12 @@ class NxXasModel(NxClass, NxGroup, nx_class="NxXas"):
     mode: NxXasMode
     element: NxElement
     edge: NxEdge
-    calculated: Optional[bool] = None
+    calculated: bool | None = None
     energy: units.PydanticQuantity = units.as_quantity([])
     intensity: units.PydanticQuantity = units.as_quantity([])
-    title: Optional[str] = None
-    plot: Optional[NxDataModel] = None
-    instrument: Optional[NxInstrument] = None
+    title: str | None = None
+    plot: NxDataModel | None = None
+    instrument: NxInstrument | None = None
 
     @pydantic.model_validator(mode="after")
     def set_title(self) -> "NxXasModel":

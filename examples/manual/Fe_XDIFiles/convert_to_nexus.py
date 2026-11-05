@@ -3,9 +3,9 @@ from pathlib import Path
 
 import h5py
 import numpy
-from larch.xafs import pre_edge
-from larch.io import read_xdi, read_ascii, write_ascii
+from larch.io import read_ascii, read_xdi, write_ascii
 from larch.utils import gformat
+from larch.xafs import pre_edge
 
 THIS_DIRECTORY = Path(__file__).parent
 
@@ -14,7 +14,6 @@ def xdi2nexus(filename, nxroot, entry_name="entry"):
     asc = read_ascii(filename)
     dat = read_xdi(str(filename))
 
-    dat.energy
     dat.mu = dat.mutrans * 1.0
     dat.itrans = (dat.itrans * 100.0).astype("int32") / 100.0  # round
     dat.array_labels[dat.array_labels.index("mutrans")] = "mu"
@@ -106,7 +105,7 @@ def xdi2nexus(filename, nxroot, entry_name="entry"):
     header.append("Process.version: 0.9.80")
     header.append(f"Process.command: pre_edge(data, {kwargs})")
     for i, p in enumerate(proc[3:]):
-        header.append(f"Process.step{i+1:d}: {p}")
+        header.append(f"Process.step{i + 1:d}: {p}")
     for j in end_header:
         if j.startswith("#"):
             j = j[1:].strip()

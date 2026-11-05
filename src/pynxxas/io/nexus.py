@@ -1,16 +1,14 @@
-"""NeXus/HDF5 file format
-"""
+"""NeXus/HDF5 file format"""
 
-from typing import Generator, Any, Tuple
-
+from collections.abc import Generator
+from typing import Any
 
 import h5py
 import pint
 import pydantic
 
-from . import url_utils
-from . import hdf5_utils
 from ..models import nexus
+from . import hdf5_utils, url_utils
 
 
 def is_nexus_file(url: url_utils.UrlType) -> bool:
@@ -19,7 +17,7 @@ def is_nexus_file(url: url_utils.UrlType) -> bool:
         try:
             with h5py.File(file, mode="r"):
                 return True
-        except Exception:
+        except OSError:
             return False
 
 
@@ -69,8 +67,8 @@ def _save_nxgroup(nxgroup: nexus.NxGroup, nxparent: h5py.Group) -> None:
 
 def _iter_model_fields(
     model: pydantic.BaseModel,
-) -> Generator[Tuple[str, pydantic.Field, Any], None, None]:
-    for field_name, field in model.__fields__.items():
+) -> Generator[tuple[str, pydantic.Field, Any], None, None]:
+    for field_name, field in type(model).model_fields.items():
         field_value = getattr(model, field_name)
         yield field_name, field, field_value
 
@@ -140,7 +138,7 @@ def _prepare_nxparent(
     nxroot.attrs.setdefault("NX_class", "NXroot")
 
     nxparent = nxroot
-    for part, nxclass in zip(parts, nxclasses):
+    for part, nxclass in zip(parts, nxclasses, strict=True):
         nxparent = nxparent.require_group(part)
         nxparent.attrs.setdefault("NX_class", nxclass)
 

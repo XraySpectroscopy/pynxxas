@@ -1,28 +1,27 @@
-"""XAS Data Interchange (XDI) file format
-"""
+"""XAS Data Interchange (XDI) file format"""
 
-import re
 import datetime
-from typing import Union, Tuple, Optional, Generator
+import re
+from collections.abc import Generator
 
-import pint
 import numpy
+import pint
 
-from . import url_utils
 from ..models import units
 from ..models.xdi import XdiModel
+from . import url_utils
 
 
 def is_xdi_file(url: url_utils.UrlType) -> bool:
     filename = url_utils.as_url(url).path
-    with open(filename, "r") as file:
+    with open(filename) as file:
         try:
             for line in file:
                 line = line.strip()
                 if not line:
                     continue
                 return line.startswith("# XDI")
-        except Exception:
+        except UnicodeDecodeError:
             return False
 
 
@@ -32,9 +31,9 @@ def load_xdi_file(url: url_utils.UrlType) -> Generator[XdiModel, None, None]:
     https://github.com/XraySpectroscopy/XAS-Data-Interchange/blob/master/specification/spec.md
     """
     filename = url_utils.as_url(url).path
-    content = {"comments": [], "column": dict(), "data": dict()}
+    content = {"comments": [], "column": {}, "data": {}}
 
-    with open(filename, "r") as file:
+    with open(filename) as file:
         # Version: first non-empty line
         for line in file:
             line = line.strip()
@@ -92,7 +91,7 @@ def load_xdi_file(url: url_utils.UrlType) -> Generator[XdiModel, None, None]:
         name
         for _, name in sorted(content.pop("column").items(), key=lambda tpl: tpl[0])
     ]
-    for name, array in zip(columns, table.T):
+    for name, array in zip(columns, table.T, strict=False):
         name, quant = _parse_xdi_column_name(name)
         content["data"][name] = array, quant
 
@@ -115,7 +114,7 @@ _SPACES_REGEX = re.compile(r"\s+")
 
 def _parse_xdi_value(
     value: str,
-) -> Union[str, datetime.datetime, pint.Quantity, Tuple[str, pint.Quantity]]:
+) -> str | datetime.datetime | pint.Quantity | tuple[str, pint.Quantity]:
     # Dimensionless integral number
     try:
         return units.as_quantity(int(value))
@@ -146,7 +145,7 @@ def _parse_xdi_value(
 
 def _parse_xdi_column_name(
     name: str,
-) -> Union[Tuple[str, Optional[str]]]:
+) -> tuple[str, str | None]:
     parts = _SPACES_REGEX.split(name)
     if len(parts) == 1:
         return name, None

@@ -73,7 +73,6 @@ def create_nxclass(root, name, nx_class, **attrs):
 
 def main(output_filename):
     with h5py.File(output_filename, "w", track_order=True) as nxroot_out:
-
         input_filename = THIS_DIRECTORY / "test_Assolution_Mauro_0001.h5"
 
         expressions = {

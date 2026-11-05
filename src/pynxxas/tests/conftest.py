@@ -1,6 +1,7 @@
 import pytest
-from ..models import NxXasModel
+
 from ..io.xdi import load_xdi_file
+from ..models import NxXasModel
 
 
 @pytest.fixture()

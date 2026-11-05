@@ -1,8 +1,6 @@
-from typing import Generator
+from collections.abc import Generator
 
-from .. import XdiModel
-from .. import NxXasModel
-
+from .. import NxXasModel, XdiModel
 from ..nexus import NxXasMode
 
 

@@ -3,7 +3,6 @@ from math import log10
 
 from charset_normalizer import from_bytes
 
-
 MAX_FILESIZE = 100 * 1024 * 1024  # 100 Mb limit
 COMMENTCHARS = "#;%*!$"
 
@@ -26,7 +25,7 @@ def fix_varname(s):
     if len(t) < 1:
         t = "_var_"
     if t[0] not in VALID_CHARS1:
-        t = "_%s" % t
+        t = f"_{t}"
     while t.endswith("_"):
         t = t[:-1]
     return t
@@ -96,7 +95,7 @@ def gformat(val, length=11):
 
     """
     if val is None or isinstance(val, bool):
-        return f"{repr(val):>{length}s}"
+        return f"{val!r:>{length}s}"
     try:
         expon = int(log10(abs(val)))
     except (OverflowError, ValueError):
@@ -120,7 +119,7 @@ def gformat(val, length=11):
     def fmt(val, length, prec, form):
         out = f"{val:{length}.{prec}{form}}"
         if form == "e" and "e+0" in out or "e-0" in out:
-            out = f"{val:{length+1}.{prec+1}{form}}"
+            out = f"{val:{length + 1}.{prec + 1}{form}}"
             out = out.replace("e-0", "e-").replace("e+0", "e+")
         return out
 

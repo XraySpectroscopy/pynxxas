@@ -6,6 +6,7 @@ from glob import glob
 from pathlib import Path
 
 from docutils import nodes
+
 from pynxxas.io.convert import convert_files
 
 
@@ -15,7 +16,7 @@ def setup(app):
     app.connect("config-inited", generate_example_nxxas_data)
 
 
-def myhdf5_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
+def myhdf5_role(name, rawtext, text, lineno, inliner, options=None, content=None):
     matches = re.match(r"^(.*?)\s*<([^<>]+)>$", text)
     if not matches:
         raise ValueError(f"Invalid 'myhdf5' directive text: '{text}'")

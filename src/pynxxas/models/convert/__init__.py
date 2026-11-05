@@ -1,14 +1,13 @@
-from typing import Type, Generator
+from collections.abc import Generator
+
 import pydantic
 
-from . import xdi
-from . import nexus
-from .. import XdiModel
-from .. import NxXasModel
+from .. import NxXasModel, XdiModel
+from . import nexus, xdi
 
 
 def convert_model(
-    instance: pydantic.BaseModel, model_type: Type[pydantic.BaseModel]
+    instance: pydantic.BaseModel, model_type: type[pydantic.BaseModel]
 ) -> Generator[pydantic.BaseModel, None, None]:
     if isinstance(instance, model_type):
         yield instance

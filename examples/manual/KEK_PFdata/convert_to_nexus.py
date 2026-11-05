@@ -3,9 +3,9 @@ from pathlib import Path
 
 import h5py
 import numpy
-from larch.xafs import pre_edge
 from larch.io import read_ascii, write_ascii
 from larch.utils import gformat
+from larch.xafs import pre_edge
 
 THIS_DIRECTORY = Path(__file__).parent
 
@@ -112,7 +112,7 @@ def kekpf2nexus(filename, nxroot, entry_name="entry", metadata=None):
     header = ["XDI/1.1", "Column.1: energy eV", "Column.2: norm"]
     collabel = ["energy          ", "norm            "]
     for i, label in enumerate(array_labels[2:]):
-        header.append(f"Column.{i+3}: {label}")
+        header.append(f"Column.{i + 3}: {label}")
         collabel.append(label + " " * (1 + max(1, 15 - len(label))))
 
     collabel = " ".join(collabel)
@@ -138,7 +138,7 @@ def kekpf2nexus(filename, nxroot, entry_name="entry", metadata=None):
     header.append("Process.version: 0.9.80")
     header.append(f"Process.command: pre_edge(data, {kwargs})")
     for i, p in enumerate(proc[2:]):
-        header.append(f"Process.step{i+1:d}: {p}")
+        header.append(f"Process.step{i + 1:d}: {p}")
     for j in end_header:
         if j.startswith("#"):
             j = j[1:].strip()
@@ -266,7 +266,6 @@ def create_nxclass(root, name, nx_class, **attrs):
 
 def main(output_filename):
     with h5py.File(output_filename, "w") as nxroot:
-
         metadata = {
             "sample": {"name": "fe010"},
             "element": {"symbol": "Fe", "edge": "K"},

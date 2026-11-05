@@ -3,9 +3,9 @@ from pathlib import Path
 
 import h5py
 import numpy
-from larch.xafs import pre_edge
-from larch.io import read_xdi, read_ascii, write_ascii
+from larch.io import read_ascii, read_xdi, write_ascii
 from larch.utils import gformat
+from larch.xafs import pre_edge
 
 THIS_DIRECTORY = Path(__file__).parent
 
@@ -45,13 +45,13 @@ def xdi2nexus(
 
     for ichan in range(nchans):
         c = 1.0 * dat.data[ichan + chan1 - 1, :]
-        s = f"col{ichan+chan1+2}"
+        s = f"col{ichan + chan1 + 2}"
         if icr1 is not None:
             c *= dat.data[ichan + icr1 - 1, :]
-            s = f"{s}*col{ichan+icr1+2}"
+            s = f"{s}*col{ichan + icr1 + 2}"
         if ocr1 is not None:
             c /= dat.data[ichan + ocr1 - 1, :]
-            s = f"{s}/col{ichan+ocr1+2}"
+            s = f"{s}/col{ichan + ocr1 + 2}"
         dat.ifluor += c
         fluor_str.append(s)
     fluor_str = "+".join(fluor_str)
@@ -145,7 +145,7 @@ def xdi2nexus(
     header = ["XDI/1.1", "Column.1: energy eV", "Column.2: norm"]
     collabel = ["energy", "norm"]
     for i, label in enumerate(array_labels[2:]):
-        header.append(f"Column.{i+3}: {label}")
+        header.append(f"Column.{i + 3}: {label}")
         collabel.append(label)
     collabel = " ".join(collabel)
 
@@ -170,7 +170,7 @@ def xdi2nexus(
     header.append("Process.version: 0.9.80")
     header.append(f"Process.command: pre_edge(data, {kwargs})")
     for i, p in enumerate(proc[2:]):
-        header.append(f"Process.step{i+1:d}: {p}")
+        header.append(f"Process.step{i + 1:d}: {p}")
     for j in end_header:
         if j.startswith("#"):
             j = j[1:].strip()
@@ -295,7 +295,6 @@ def create_nxclass(root, name, nx_class, **attrs):
 
 def main(output_filename):
     with h5py.File(output_filename, "w") as nxroot:
-
         metadata = {
             "sample": {"name": "apophyllite"},
             "element": {"symbol": "V", "edge": "K"},
@@ -304,7 +303,13 @@ def main(output_filename):
             "detector": {"i0": "20 cm, He", "ifluor": "Vortex ME-4"},
         }
 
-        call_kws = dict(nchans=4, chan1=14, icr1=22, ocr1=None, metadata=metadata)
+        call_kws = {
+            "nchans": 4,
+            "chan1": 14,
+            "icr1": 22,
+            "ocr1": None,
+            "metadata": metadata,
+        }
 
         entry_name = "V_XANES"
 
