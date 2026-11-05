@@ -2,8 +2,10 @@ from collections.abc import Generator
 
 import pydantic
 
-from .. import NxXasModel, XdiModel
-from . import nexus, xdi
+from .. import NxXasModel
+from .. import XdiModel
+from . import nexus
+from . import xdi
 
 
 def convert_model(

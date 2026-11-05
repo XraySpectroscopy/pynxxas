@@ -5,7 +5,8 @@ from collections.abc import Generator
 import pydantic
 
 from .. import models
-from . import nexus, xdi
+from . import nexus
+from . import xdi
 from .url_utils import UrlType
 
 

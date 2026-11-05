@@ -8,7 +8,8 @@ import pint
 import pydantic
 
 from ..models import nexus
-from . import hdf5_utils, url_utils
+from . import hdf5_utils
+from . import url_utils
 
 
 def is_nexus_file(url: url_utils.UrlType) -> bool:

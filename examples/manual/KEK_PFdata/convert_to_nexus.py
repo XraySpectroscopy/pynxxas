@@ -3,7 +3,8 @@ from pathlib import Path
 
 import h5py
 import numpy
-from larch.io import read_ascii, write_ascii
+from larch.io import read_ascii
+from larch.io import write_ascii
 from larch.utils import gformat
 from larch.xafs import pre_edge
 

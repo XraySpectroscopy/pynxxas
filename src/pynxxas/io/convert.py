@@ -1,12 +1,14 @@
 import logging
 import pathlib
-from collections.abc import Generator, Iterator
+from collections.abc import Generator
+from collections.abc import Iterator
 from contextlib import contextmanager
 from glob import glob
 
 import pydantic
 
-from .. import io, models
+from .. import io
+from .. import models
 from ..models import convert
 
 logger = logging.getLogger(__name__)

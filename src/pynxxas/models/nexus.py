@@ -1,6 +1,9 @@
 """NeXus data model_instance"""
 
-from typing import Any, ClassVar, Literal, get_args
+from typing import Any
+from typing import ClassVar
+from typing import Literal
+from typing import get_args
 
 import pydantic
 

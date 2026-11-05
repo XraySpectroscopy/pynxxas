@@ -1,5 +1,6 @@
 from collections.abc import Sequence
-from typing import Annotated, Any
+from typing import Annotated
+from typing import Any
 
 import pint
 import pydantic
