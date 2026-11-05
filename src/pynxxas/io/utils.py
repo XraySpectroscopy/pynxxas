@@ -34,21 +34,24 @@ def fix_varname(s):
 def read_textfile(filename, size=None):
     """read text from a file as string
 
-    Argument
-    --------
-    filename  (str or file): name of file to read or file-like object
-    size  (int or None): number of bytes to read
+    Parameters
+    ----------
+    filename : str or file
+        Name of file to read or file-like object.
+    size : int or None
+        Number of bytes to read.
 
     Returns
     -------
-    text of file as string.
+    str
+        Text of file as string.
 
     Notes
-    ------
+    -----
     1. the encoding is detected with charset_normalizer.from_bytes
        which is then used to decode bytes read from file.
-    2. line endings are normalized to be '\n', so that
-       splitting on '\n' will give a list of lines.
+    2. line endings are normalized to be ``'\\n'``, so that
+       splitting on ``'\\n'`` will give a list of lines.
     3. if filename is given, it can be a gzip-compressed file
     """
     text = ""
@@ -70,10 +73,11 @@ def gformat(val, length=11):
     """Format a number with '%g'-like format.
 
     Except that:
-        a) the length of the output string will be of the requested length.
-        b) positive numbers will have a leading blank.
-        b) the precision will be as high as possible.
-        c) trailing zeros will not be trimmed.
+
+    a) the length of the output string will be of the requested length.
+    b) positive numbers will have a leading blank.
+    c) the precision will be as high as possible.
+    d) trailing zeros will not be trimmed.
 
     The precision will typically be ``length-7``.
 
@@ -90,7 +94,7 @@ def gformat(val, length=11):
         String of specified length.
 
     Notes
-    ------
+    -----
     Positive values will have leading blank.
 
     """

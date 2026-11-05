@@ -23,6 +23,7 @@ docstitle = f"{project} {version}"
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
+    "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx_autodoc_typehints",
     "myhdf5_inline_role",

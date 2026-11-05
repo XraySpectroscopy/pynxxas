@@ -6,4 +6,4 @@
    :members:
    :undoc-members:
    :show-inheritance:
-   :inherited-members:
+   :inherited-members: BaseModel
