@@ -1,6 +1,4 @@
-import contextlib
 import importlib.util
-import io
 import os
 import re
 from glob import glob
@@ -66,13 +64,12 @@ def generate_example_nxxas_data(app, config):
         examples_dir = Path(app.srcdir) / ".." / "examples"
 
         output_filename = static_dir / "auto" / "converted.nxs"
-        with _convert(output_filename, static_dir):
-            convert_files(
-                [str(examples_dir / "auto" / "*.xdi")],
-                str(output_filename),
-                "nexus",
-                overwrite=True,
-            )
+        convert_files(
+            [str(examples_dir / "auto" / "*.xdi")],
+            str(output_filename),
+            "nexus",
+            overwrite=True,
+        )
 
         script_paths = sorted(
             glob(str(examples_dir / "manual" / "*" / "convert_to_nexus.py"))
@@ -80,27 +77,12 @@ def generate_example_nxxas_data(app, config):
         for script_path in script_paths:
             module_name = os.path.basename(os.path.dirname(script_path))
             output_filename = static_dir / "manual" / module_name / f"{module_name}.nxs"
-            with _convert(output_filename, static_dir):
-                module = import_file(module_name, script_path)
-                module.main(output_filename)
+            output_filename.parent.mkdir(parents=True, exist_ok=True)
+            module = import_file(module_name, script_path)
+            module.main(output_filename)
     except Exception:
         logger.exception("NeXus file generation failed.")
         raise
-
-
-@contextlib.contextmanager
-def _convert(output_filename, static_dir):
-    """Log one line for each conversion."""
-    label = f"{output_filename.relative_to(static_dir)!s:<50}"
-    output_filename.parent.mkdir(parents=True, exist_ok=True)
-    try:
-        # The conversion scripts print one line for each file they write.
-        with contextlib.redirect_stdout(io.StringIO()):
-            yield
-    except Exception:
-        logger.info("%s FAILED", label)
-        raise
-    logger.info("%s done", label)
 
 
 def import_file(module_name, script_path):

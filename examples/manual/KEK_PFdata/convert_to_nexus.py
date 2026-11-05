@@ -257,7 +257,7 @@ def kekpf2nexus(filename, nxroot, entry_name="entry", metadata=None):
     with contextlib.redirect_stdout(io.StringIO()):
         write_ascii(outfile, *coldata, header=header, label=collabel)
 
-    print(f"Wrote group {entry_name} in file {outfile}")
+    print(f"Wrote group {entry_name} in file {Path(nxroot.file.filename).name}")
 
 
 def create_nxclass(root, name, nx_class, **attrs):

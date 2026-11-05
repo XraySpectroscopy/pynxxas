@@ -230,7 +230,7 @@ def xdi2nexus(filename, nxroot, entry_name="entry"):
             label="energy           norm             itrans           i0",
         )
 
-    print(f"Wrote group {entry_name} in file {outfile}")
+    print(f"Wrote group {entry_name} in file {Path(nxroot.file.filename).name}")
 
 
 def create_nxclass(root, name, nx_class, **attrs):

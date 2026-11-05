@@ -61,7 +61,7 @@ def bliss2nexus(nxentry_in, expressions, metadata, nxroot_out, entry_name):
         plot["energy"].attrs["long_name"] = f"Energy ({energy_units})"
         plot["intensity"].attrs["long_name"] = "Normalized mu(E)"
 
-    print(f"Wrote group {entry_name} in file {nxroot_out.filename}")
+    print(f"Wrote group {entry_name} in file {Path(nxroot_out.filename).name}")
 
 
 def create_nxclass(root, name, nx_class, **attrs):
