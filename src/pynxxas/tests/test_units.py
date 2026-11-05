@@ -1,7 +1,6 @@
-import pint
 import numpy
+import pint
 from pydantic import TypeAdapter
-
 
 from ..models import units
 

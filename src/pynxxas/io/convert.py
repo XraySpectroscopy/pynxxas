@@ -1,8 +1,9 @@
 import logging
 import pathlib
-from glob import glob
+from collections.abc import Generator
+from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Iterator, Generator
+from glob import glob
 
 import pydantic
 
@@ -29,9 +30,9 @@ def convert_files(
     output_filename.parent.mkdir(parents=True, exist_ok=True)
 
     state = {"return_code": 0, "scan_number": 0, "filename": None}
-    scan_number = 0
-    for model_in in _iter_load_models(file_patterns, state):
-        scan_number += 1
+    for scan_number, model_in in enumerate(
+        _iter_load_models(file_patterns, state), start=1
+    ):
         for model_out in _iter_convert_model(model_in, model_type, state):
             if output_format == "nexus":
                 output_url = f"{output_filename}?path=/dataset{scan_number:02}"
@@ -86,4 +87,4 @@ def _handle_error(action: str, state: dict) -> Generator[None, None, None]:
         logger.warning("Error when %s '%s': %s", action, state["filename"], e)
     except Exception:
         state["return_code"] = 1
-        logger.error("Error when %s '%s'", action, state["filename"], exc_info=True)
+        logger.exception("Error when %s '%s'", action, state["filename"])

@@ -1,5 +1,4 @@
 import os
-from typing import Optional, Union
 
 import h5py
 
@@ -7,9 +6,9 @@ import h5py
 def create_hdf5_link(
     h5group: h5py.Group,
     target_name: str,
-    target_filename: Optional[str],
+    target_filename: str | None,
     absolute: bool = False,
-) -> Union[h5py.SoftLink, h5py.ExternalLink]:
+) -> h5py.SoftLink | h5py.ExternalLink:
     """Create HDF5 soft link (supports relative down paths) or external link (supports relative paths)."""
     this_name = h5group.name
     this_filename = h5group.file.filename

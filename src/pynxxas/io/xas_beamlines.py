@@ -42,9 +42,11 @@ def guess_beamline(header=None):
         if line1.startswith("#"):
             line1 = line1.replace("#", "")
 
-        if "xdi/1" in line1 and "epics stepscan" in line1:
-            return APSGSE_BeamlineData
-        elif line1.startswith("; epics scan 1 dim"):
+        if (
+            "xdi/1" in line1
+            and "epics stepscan" in line1
+            or line1.startswith("; epics scan 1 dim")
+        ):
             return APSGSE_BeamlineData
         elif "labview control panel" in line1:
             return APSXSD_BeamlineData
@@ -94,8 +96,7 @@ class GenericBeamlineData:
         if len(self.headerlines) >= 1:
             lastline = self.headerlines[-1].strip()
         for cchars in ("#L", "#C", "#", "C"):
-            if lastline.startswith(cchars):
-                lastline = lastline[len(cchars) :]
+            lastline = lastline.removeprefix(cchars)
         for badchar in "\t,#@%&\"'":
             lastline = lastline.replace(badchar, " ")
         return self._set_labels(lastline.split(), ncolumns=ncolumns)
@@ -110,15 +111,15 @@ class GenericBeamlineData:
             if len(word) > 0:
                 word = fix_varname(word)
             else:
-                word = "col%d" % (i + 1)
+                word = f"col{i + 1}"
             labels.append(word)
         for i, lab in enumerate(labels):
             if lab in labels[:i]:
-                labels[i] = lab + "_col%d" % (i + 1)
+                labels[i] = f"{lab}_col{i + 1}"
 
         if ncolumns is not None and len(labels) < ncolumns:
             for i in range(len(labels), ncolumns):
-                labels.append("col%d" % (i + 1))
+                labels.append(f"col{i + 1}")
         self.labels = labels
         return labels
 
@@ -144,7 +145,7 @@ class APSGSE_BeamlineData(GenericBeamlineData):
 
     def get_array_labels(self, ncolumns=None):
         if not self.beamline_matches():
-            raise ValueError("header is not from beamline %s" % self.name)
+            raise ValueError(f"header is not from beamline {self.name}")
 
         line1 = self.headerlines[0].lower()
         oldstyle = line1.startswith("; epics scan 1 dim")
@@ -158,8 +159,8 @@ class APSGSE_BeamlineData(GenericBeamlineData):
                     if len(line) < 2 or "-->" not in line:
                         mode = "legend done"
                     else:
-                        pref, suff = line.split("-->", 1)
-                        pid, arg = pref.split("=")
+                        pref = line.split("-->", 1)[0]
+                        _pid, arg = pref.split("=")
                         arg = arg.replace("{", "").replace("}", "")
                         labels.append(arg.strip())
                 elif mode == "search" and "column labels:" in line:
@@ -172,7 +173,7 @@ class APSGSE_BeamlineData(GenericBeamlineData):
                 else:
                     break
                 if line.lower().startswith("column.") and "||" in line:
-                    label, pvname = line.split("||", 1)
+                    label = line.split("||", 1)[0]
                     label, entry = label.split(":")
                     entry = entry.strip()
                     if " " in entry:
@@ -210,7 +211,7 @@ class APS12BM_BeamlineData(GenericBeamlineData):
 
     def get_array_labels(self, ncolumns=None):
         if not self.beamline_matches():
-            raise ValueError("header is not from beamline %s" % self.name)
+            raise ValueError(f"header is not from beamline {self.name}")
 
         labelline = self.headerlines[-1].replace("#C", " ").strip()
         words = labelline.split()
@@ -252,7 +253,7 @@ class APSMRCAT_BeamlineData(GenericBeamlineData):
 
     def get_array_labels(self, ncolumns=None):
         if not self.beamline_matches():
-            raise ValueError("header is not from beamline %s" % self.name)
+            raise ValueError(f"header is not from beamline {self.name}")
 
         labels = []
         mode = "search"
@@ -285,7 +286,7 @@ class APSXSD_BeamlineData(GenericBeamlineData):
 
     def get_array_labels(self, ncolumns=None):
         if not self.beamline_matches():
-            raise ValueError("header is not from beamline %s" % self.name)
+            raise ValueError(f"header is not from beamline {self.name}")
 
         # here we try two different ways for "older" and "newer" 20BM/9BM fles
         labels = []
@@ -318,7 +319,7 @@ class APSXSD_BeamlineData(GenericBeamlineData):
                             for o in range(1, 4):
                                 try:
                                     _ = int(line[z - o])
-                                except Exception:
+                                except ValueError:
                                     break
                             z = z - o + 1
                         val = line[j + 1 : z].strip()
@@ -328,7 +329,7 @@ class APSXSD_BeamlineData(GenericBeamlineData):
                         try:
                             key = int(key)
                             maxkey = max(maxkey, key)
-                        except Exception:
+                        except ValueError:
                             break
                         tmplabels[key] = val
 
@@ -370,7 +371,7 @@ class NSLSXDAC_BeamlineData(GenericBeamlineData):
 
     def get_array_labels(self, ncolumns=None):
         if not self.beamline_matches():
-            raise ValueError("header is not from beamline %s" % self.name)
+            raise ValueError(f"header is not from beamline {self.name}")
 
         labels = []
         mode = "search"
@@ -403,7 +404,7 @@ class SSRL_BeamlineData(GenericBeamlineData):
 
     def get_array_labels(self, ncolumns=None):
         if not self.beamline_matches():
-            raise ValueError("header is not from beamline %s" % self.name)
+            raise ValueError(f"header is not from beamline {self.name}")
 
         labels = []
         mode = "search"
@@ -442,7 +443,7 @@ class CLSHXMA_BeamlineData(GenericBeamlineData):
 
     def get_array_labels(self, ncolumns=None):
         if not self.beamline_matches():
-            raise ValueError("header is not from beamline %s" % self.name)
+            raise ValueError(f"header is not from beamline {self.name}")
 
         labels = []
         for line in self.headerlines:
@@ -480,7 +481,7 @@ class KEKPF_BeamlineData(GenericBeamlineData):
 
     def get_array_labels(self, ncolumns=None):
         if not self.beamline_matches():
-            raise ValueError("header is not from beamline %s" % self.name)
+            raise ValueError(f"header is not from beamline {self.name}")
 
         for line in self.headerlines:
             line = line.lower().replace("#", " ").strip()

@@ -1,9 +1,9 @@
 import os
-import sys
 import pathlib
+import sys
 import urllib.parse
 import urllib.request
-from typing import Union, NamedTuple
+from typing import NamedTuple
 
 
 class ParsedUrlType(NamedTuple):
@@ -11,7 +11,7 @@ class ParsedUrlType(NamedTuple):
     internal_path: str
 
 
-UrlType = Union[str, pathlib.Path, urllib.parse.ParseResult, ParsedUrlType]
+UrlType = str | pathlib.Path | urllib.parse.ParseResult | ParsedUrlType
 
 
 _WIN32 = sys.platform == "win32"

@@ -1,13 +1,12 @@
-"""File formats
-"""
+"""File formats"""
 
-from typing import Generator
+from collections.abc import Generator
 
 import pydantic
 
-from . import xdi
-from . import nexus
 from .. import models
+from . import nexus
+from . import xdi
 from .url_utils import UrlType
 
 

@@ -1,6 +1,6 @@
-import sys
-import logging
 import argparse
+import logging
+import sys
 
 from .. import models
 from ..io.convert import convert_files

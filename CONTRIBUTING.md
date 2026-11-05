@@ -25,9 +25,14 @@ pip install -e .[dev]
 
 ### Linting
 
-The configuration for [black](https://black.readthedocs.io/en/stable/) and [flake8](https://flake8.pycqa.org/en/latest/index.html) can be modified in `setup.cfg`.
+Use [ruff](https://docs.astral.sh/ruff/) to lint and format the code. The configuration is in `pyproject.toml`.
 
-Comment lines with `# noqa: E123` to ignore certain linting errors.
+```bash
+ruff check .
+ruff format .
+```
+
+Add `# noqa: E123` to a line to ignore a specific linting error.
 
 ### Testing
 

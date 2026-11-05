@@ -1,5 +1,4 @@
-"""rm -rf doc/_generated/; sphinx-build doc build/sphinx/html -E -a
-"""
+"""rm -rf doc/_generated/; sphinx-build doc build/sphinx/html -E -a"""
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information

@@ -1,8 +1,8 @@
-"""XAS Data Interchange (XDI) data model_instance
-"""
+"""XAS Data Interchange (XDI) data model_instance"""
 
 import datetime
-from typing import Optional, List, Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 import pydantic
 
@@ -14,22 +14,22 @@ class XdiBaseModel(pydantic.BaseModel, extra="allow"):
 
 
 class XdiFacilityNamespace(XdiBaseModel):
-    name: Optional[str] = None
-    energy: Optional[units.PydanticQuantity] = None
-    current: Optional[units.PydanticQuantity] = None
-    xray_source: Optional[str] = None
+    name: str | None = None
+    energy: units.PydanticQuantity | None = None
+    current: units.PydanticQuantity | None = None
+    xray_source: str | None = None
 
 
 class XdiBeamlineNamespace(XdiBaseModel):
-    name: Optional[str] = None
-    collimation: Optional[str] = None
-    focusing: Optional[str] = None
-    harmonic_rejection: Optional[str] = None
+    name: str | None = None
+    collimation: str | None = None
+    focusing: str | None = None
+    harmonic_rejection: str | None = None
 
 
 class XdiMonoNamespace(XdiBaseModel):
-    name: Optional[str] = None
-    d_spacing: Optional[units.PydanticQuantity] = None
+    name: str | None = None
+    d_spacing: units.PydanticQuantity | None = None
 
 
 # common alternate spellings of XDI arrays
@@ -47,10 +47,10 @@ XDI_ARRAY_ALIASES = {
 
 
 class XdiDetectorNamespace(XdiBaseModel):
-    i0: Optional[str] = None
-    itrans: Optional[str] = None
-    ifluor: Optional[str] = None
-    irefer: Optional[str] = None
+    i0: str | None = None
+    itrans: str | None = None
+    ifluor: str | None = None
+    irefer: str | None = None
 
     @pydantic.model_validator(mode="before")
     @classmethod
@@ -65,66 +65,66 @@ class XdiDetectorNamespace(XdiBaseModel):
 
 
 class XdiSampleNamespace(XdiBaseModel):
-    name: Optional[str] = None
-    id: Optional[str] = None
-    stoichiometry: Optional[str] = None
-    prep: Optional[str] = None
-    experimenters: Optional[str] = None
-    temperature: Optional[units.PydanticQuantity] = None
-    pressure: Optional[units.PydanticQuantity] = None
-    ph: Optional[units.PydanticQuantity] = None
-    eh: Optional[units.PydanticQuantity] = None
-    volume: Optional[units.PydanticQuantity] = None
-    porosity: Optional[units.PydanticQuantity] = None
-    density: Optional[units.PydanticQuantity] = None
-    concentration: Optional[units.PydanticQuantity] = None
-    resistivity: Optional[units.PydanticQuantity] = None
-    viscosity: Optional[units.PydanticQuantity] = None
-    electric_field: Optional[units.PydanticQuantity] = None
-    magnetic_field: Optional[units.PydanticQuantity] = None
-    magnetic_moment: Optional[units.PydanticQuantity] = None
-    crystal_structure: Optional[units.PydanticQuantity] = None
-    opacity: Optional[units.PydanticQuantity] = None
-    electrochemical_potential: Optional[units.PydanticQuantity] = None
+    name: str | None = None
+    id: str | None = None
+    stoichiometry: str | None = None
+    prep: str | None = None
+    experimenters: str | None = None
+    temperature: units.PydanticQuantity | None = None
+    pressure: units.PydanticQuantity | None = None
+    ph: units.PydanticQuantity | None = None
+    eh: units.PydanticQuantity | None = None
+    volume: units.PydanticQuantity | None = None
+    porosity: units.PydanticQuantity | None = None
+    density: units.PydanticQuantity | None = None
+    concentration: units.PydanticQuantity | None = None
+    resistivity: units.PydanticQuantity | None = None
+    viscosity: units.PydanticQuantity | None = None
+    electric_field: units.PydanticQuantity | None = None
+    magnetic_field: units.PydanticQuantity | None = None
+    magnetic_moment: units.PydanticQuantity | None = None
+    crystal_structure: units.PydanticQuantity | None = None
+    opacity: units.PydanticQuantity | None = None
+    electrochemical_potential: units.PydanticQuantity | None = None
 
 
 class XdiScanNamespace(XdiBaseModel):
-    start_time: Optional[datetime.datetime] = None
-    end_time: Optional[datetime.datetime] = None
-    edge_energy: Optional[units.PydanticQuantity] = None
+    start_time: datetime.datetime | None = None
+    end_time: datetime.datetime | None = None
+    edge_energy: units.PydanticQuantity | None = None
 
 
 class XdiElementNamespace(XdiBaseModel):
-    symbol: Optional[str] = None
-    edge: Optional[str] = None
-    reference: Optional[str] = None
-    ref_edge: Optional[str] = None
+    symbol: str | None = None
+    edge: str | None = None
+    reference: str | None = None
+    ref_edge: str | None = None
 
 
 class XdiData(XdiBaseModel):
-    energy: Optional[units.PydanticQuantity] = None
-    angle: Optional[units.PydanticQuantity] = None
-    i0: Optional[units.PydanticQuantity] = None
-    itrans: Optional[units.PydanticQuantity] = None
-    ifluor: Optional[units.PydanticQuantity] = None
-    irefer: Optional[units.PydanticQuantity] = None
-    mutrans: Optional[units.PydanticQuantity] = None
-    mufluor: Optional[units.PydanticQuantity] = None
-    murefer: Optional[units.PydanticQuantity] = None
-    normtrans: Optional[units.PydanticQuantity] = None
-    normfluor: Optional[units.PydanticQuantity] = None
-    normrefer: Optional[units.PydanticQuantity] = None
-    k: Optional[units.PydanticQuantity] = None
-    chi: Optional[units.PydanticQuantity] = None
-    chi_mag: Optional[units.PydanticQuantity] = None
-    chi_pha: Optional[units.PydanticQuantity] = None
-    chi_re: Optional[units.PydanticQuantity] = None
-    chi_im: Optional[units.PydanticQuantity] = None
-    r: Optional[units.PydanticQuantity] = None
-    chir_mag: Optional[units.PydanticQuantity] = None
-    chir_pha: Optional[units.PydanticQuantity] = None
-    chir_re: Optional[units.PydanticQuantity] = None
-    chir_im: Optional[units.PydanticQuantity] = None
+    energy: units.PydanticQuantity | None = None
+    angle: units.PydanticQuantity | None = None
+    i0: units.PydanticQuantity | None = None
+    itrans: units.PydanticQuantity | None = None
+    ifluor: units.PydanticQuantity | None = None
+    irefer: units.PydanticQuantity | None = None
+    mutrans: units.PydanticQuantity | None = None
+    mufluor: units.PydanticQuantity | None = None
+    murefer: units.PydanticQuantity | None = None
+    normtrans: units.PydanticQuantity | None = None
+    normfluor: units.PydanticQuantity | None = None
+    normrefer: units.PydanticQuantity | None = None
+    k: units.PydanticQuantity | None = None
+    chi: units.PydanticQuantity | None = None
+    chi_mag: units.PydanticQuantity | None = None
+    chi_pha: units.PydanticQuantity | None = None
+    chi_re: units.PydanticQuantity | None = None
+    chi_im: units.PydanticQuantity | None = None
+    r: units.PydanticQuantity | None = None
+    chir_mag: units.PydanticQuantity | None = None
+    chir_pha: units.PydanticQuantity | None = None
+    chir_re: units.PydanticQuantity | None = None
+    chir_im: units.PydanticQuantity | None = None
 
 
 class XdiModel(XdiBaseModel):
@@ -135,5 +135,5 @@ class XdiModel(XdiBaseModel):
     facility: XdiFacilityNamespace = XdiFacilityNamespace()
     detector: XdiDetectorNamespace = XdiDetectorNamespace()
     sample: XdiSampleNamespace = XdiSampleNamespace()
-    comments: List[str] = list()
+    comments: list[str] = []
     data: XdiData = XdiData()
