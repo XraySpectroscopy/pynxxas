@@ -90,7 +90,7 @@ def generate_example_nxxas_data(app, config):
 
 @contextlib.contextmanager
 def _convert(output_filename, static_dir):
-    """Log one line for each conversion, like examples/convert_to_nexus.sh."""
+    """Log one line for each conversion."""
     label = f"{output_filename.relative_to(static_dir)!s:<50}"
     output_filename.parent.mkdir(parents=True, exist_ok=True)
     try:
