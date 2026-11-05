@@ -18,5 +18,6 @@ __pycache__/
 /dist/
 *.egg-info/
 .eggs/
+/doc/_build
 /doc/_generated
 /doc/_static/**/*.nxs

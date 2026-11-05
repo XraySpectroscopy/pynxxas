@@ -1,4 +1,4 @@
-"""rm -rf doc/_generated/; sphinx-build doc build/sphinx/html -E -a"""
+"""rm -rf doc/_generated/; sphinx-build doc doc/_build/html -E -a"""
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
@@ -23,6 +23,7 @@ docstitle = f"{project} {version}"
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
+    "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx_autodoc_typehints",
     "myhdf5_inline_role",
