@@ -35,7 +35,6 @@ def xdi2nexus(filename, nxroot, detectors):
     pre_edge(dat, **PRE_EDGE)
 
     root = create_nxclass(nxroot, entry_name, "NXentry", default="plot")
-    nxroot.attrs["default"] = entry_name
     root["definition"] = "NXxas_trans"
     scan = dat.attrs["scan"]
     for key in ("start_time", "end_time"):
@@ -137,7 +136,6 @@ def xdi2nexus(filename, nxroot, detectors):
         header.append(j)
 
     process = create_nxclass(root, "processing", "NXprocess")
-    process.attrs["NX_class"] = "NXprocess"
     process["program"] = "xraylarch"
     process["version"] = larch.__version__
     nts = create_nxclass(process, "note", "NXnote")
@@ -270,6 +268,7 @@ def main(output_filename):
         xdi2nexus(THIS_DIRECTORY / "Fe-K-IronFoil.xdi", nxroot, foil)
         xdi2nexus(THIS_DIRECTORY / "Fe-Hematite.xdi", nxroot, sample)
         xdi2nexus(THIS_DIRECTORY / "Fe-Wustite.xdi", nxroot, sample)
+        nxroot.attrs["default"] = "Fe-K-IronFoil"
 
 
 if __name__ == "__main__":
