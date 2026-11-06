@@ -64,7 +64,6 @@ def xdi2nexus(filename, nxroot, detectors):
     )
     plot["energy"] = h5py.SoftLink(root["energy"].name)
     plot["intensity"] = h5py.SoftLink(root["intensity"].name)
-    plot["energy"].attrs["units"] = "eV"
     plot["energy"].attrs["long_name"] = "Energy (eV)"
     plot["intensity"].attrs["long_name"] = "Normalized mu(E)"
 
