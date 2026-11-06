@@ -1,6 +1,6 @@
 import contextlib
 import io
-import json
+import re
 from pathlib import Path
 
 import h5py
@@ -37,6 +37,15 @@ def xdi2nexus(filename, nxroot, detectors):
     root = create_nxclass(nxroot, entry_name, "NXentry", default="plot")
     nxroot.attrs["default"] = entry_name
     root["definition"] = "NXxas_trans"
+    scan = dat.attrs["scan"]
+    for key in ("start_time", "end_time"):
+        if key in scan:
+            root[key] = scan[key]
+
+    # XDI metadata that the NXentry base class defines
+    root["run_cycle"] = dat.attrs["facility"]["cycle"]
+    user = create_nxclass(root, "user", "NXuser")
+    user["name"] = scan["experimenters"]
 
     root["energy"] = dat.energy
     root["energy"].attrs["units"] = "eV"
@@ -60,14 +69,13 @@ def xdi2nexus(filename, nxroot, detectors):
     plot["energy"].attrs["long_name"] = "Energy (eV)"
     plot["intensity"].attrs["long_name"] = "Normalized mu(E)"
 
-    names = {}
-
-    # sample
+    sample_name = dat.attrs["sample"]["name"]
     sample = create_nxclass(root, "sample", "NXsample")
-    for aname, value in dat.attrs["sample"].items():
-        sample[aname] = value
-        if aname.lower() == "name":
-            names["sample"] = value
+    sample["name"] = sample_name
+    sample["description"] = dat.attrs["sample"]["prep"]
+    x_value, x_units = dat.attrs["sample"]["x"].split()
+    sample["x_translation"] = float(x_value)
+    sample["x_translation"].attrs["units"] = x_units
 
     # process
     kwargs = ", ".join([f"{k}={v}" for k, v in dat.callargs.pre_edge.items()])
@@ -131,47 +139,45 @@ def xdi2nexus(filename, nxroot, detectors):
         if units:
             raw_data[label].attrs["units"] = units
 
-    # scan
-    scan = create_nxclass(root, "scan", "NXparameters")
-    scan["headers"] = json.dumps(dat.attrs)
-    scan["filename"] = filename.name
-
-    for key, val in dat.attrs["scan"].items():
-        scan[key] = val
-    if getattr(dat, "comments", None) is not None:
-        scan["comments"] = dat.comments
-
     inst = create_nxclass(root, "instrument", "NXinstrument")
 
     # NXsource requires a name: write it only when the XDI file gives the facility.
-    if "facility" in dat.attrs:
+    facility = dat.attrs.get("facility", {}).get("name", "")
+    if facility:
         source = create_nxclass(inst, "source", "NXsource")
         source["type"] = "Synchrotron X-ray Source"
+        source["name"] = facility
         source["probe"] = "x-ray"
-        for aname, value in dat.attrs["facility"].items():
-            if aname.lower() == "energy":
-                words = value.split(maxsplit=1)
-                en_value = float(words[0])
-                source["energy"] = en_value
-                if len(words) > 1:
-                    source["energy"].attrs["units"] = words[1]
-            else:
-                source[aname] = value
-                if aname.lower() == "name":
-                    names["facility"] = value
+        # XDI specification: the facility energy is in GeV and the current in mA.
+        source["energy"] = float(dat.attrs["facility"]["energy"])
+        source["energy"].attrs["units"] = "GeV"
+        source["current"] = float(dat.attrs["facility"]["current"])
+        source["current"].attrs["units"] = "mA"
+        source["top_up"] = dat.attrs["facility"]["mode"] == "top-off"
 
-    bl = create_nxclass(inst, "beamline", "NXparameters")
-    for aname, value in dat.attrs["beamline"].items():
-        bl[aname] = value
-        if aname.lower() == "name":
-            names["beamline"] = value
+    beamline = dat.attrs.get("beamline", {}).get("name", "")
+    root["title"] = " ".join([sample_name, facility, beamline]).strip()
+    inst["name"] = beamline
 
-    title_words = [
-        names.get("sample", filename.name),
-        names.get("facility", ""),
-        names.get("beamline", ""),
-    ]
-    root["title"] = (" ".join(title_words)).strip()
+    xray_source = dat.attrs["beamline"]["xray_source"]
+    if "wiggler" in xray_source:
+        wiggler = create_nxclass(inst, "wiggler", "NXinsertion_device")
+        wiggler["type"] = "wiggler"
+        if "three-pole" in xray_source:
+            wiggler["poles"] = 3
+
+    # Mirrors: the XDI text in the description, the pitch as the incident angle
+    for name, key in [
+        ("collimating_mirror", "collimation"),
+        ("harmonic_rejection_mirror", "harmonic_rejection"),
+    ]:
+        text = dat.attrs["beamline"][key]
+        mirror = create_nxclass(inst, name, "NXmirror")
+        mirror["description"] = text
+        pitch = re.search(r"pitch = ([\d.]+) mrad", text)
+        if pitch:
+            mirror["incident_angle"] = float(pitch.group(1))
+            mirror["incident_angle"].attrs["units"] = "mrad"
 
     # mono
     d_spacing = dat.attrs["mono"].get("d_spacing", 3.13550)
@@ -201,7 +207,6 @@ def xdi2nexus(filename, nxroot, detectors):
         return mono_type, refl
 
     monochromator = create_nxclass(inst, "monochromator", "NXmonochromator")
-    monochromator["energy"] = h5py.SoftLink(root["energy"].name)
 
     crystal = create_nxclass(monochromator, "crystal", "NXcrystal")
     mono_type, refl = parse_mono_string(mono_name)
@@ -217,6 +222,7 @@ def xdi2nexus(filename, nxroot, detectors):
         detector["data"].attrs["units"] = dat.array_units[
             dat.array_labels.index(column)
         ]
+        detector["type"] = "ion chamber"
         detector["description"] = dat.attrs["detector"][DETECTOR_KEYS[column]]
 
     outfile = filename.parent / (filename.stem + "_new.xdi")
