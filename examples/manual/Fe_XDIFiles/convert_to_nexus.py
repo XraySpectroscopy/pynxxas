@@ -119,9 +119,13 @@ def xdi2nexus(filename, nxroot, detectors):
     applications = asc.header[0].lstrip("#").split()[1:]
     header = [" ".join(["XDI/1.1", *applications])]
     header += [f"Column.{i + 1}: {name}" for i, name in enumerate(columns)]
+    header += [
+        f"Detector.I{i}: {dat.attrs['detector'][DETECTOR_KEYS[column]]}"
+        for i, column in enumerate(detectors.values())
+    ]
     end_header = []
     target = header
-    # Skip the XDI version line and the columns of the original file.
+    # Skip the version line, columns, and detectors of the original file.
     for j in asc.header[1:]:
         if j.startswith("#"):
             j = j[1:].strip()
@@ -129,7 +133,7 @@ def xdi2nexus(filename, nxroot, detectors):
             break
         if "///" in j:
             target = end_header
-        if not j.startswith("Column."):
+        if not j.startswith(("Column.", "Detector.")):
             target.append(j)
 
     header.append("Process.program: xraylarch")
