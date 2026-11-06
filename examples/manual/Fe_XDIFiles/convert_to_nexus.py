@@ -27,29 +27,26 @@ def xdi2nexus(filename, nxroot, entry_name="entry"):
     pre_slope = dat.pre_edge_details.pre_slope
     nvict = dat.pre_edge_details.nvict
 
-    rawdata = numpy.zeros((len(dat.energy), 4), dtype="float64")
-    rawdata[:, 0] = dat.energy
-    rawdata[:, 1] = dat.norm
-    rawdata[:, 2] = (dat.itrans * 10.0).astype("int32") / 10.0
-    rawdata[:, 3] = dat.i0 * 1.0
-
     root = create_nxclass(nxroot, entry_name, "NXentry", default="plot")
     nxroot.attrs["default"] = entry_name
-    root["definition"] = "NXxas"
-
-    root["mode"] = "transmission"
+    root["definition"] = "NXxas_trans"
 
     root["energy"] = dat.energy
     root["energy"].attrs["units"] = "eV"
     root["intensity"] = dat.norm
+    root["intensity"].attrs["units"] = ""
+    root["intensity"].attrs["type"] = "absorbance"
+    root["intensity"].attrs["provenance"] = "measured"
 
     element = create_nxclass(root, "element", "NXelement")
     element["symbol"] = dat.attrs["element"]["symbol"]
 
-    edge = create_nxclass(root, "edge", "NXedge")
+    edge = create_nxclass(root, "edge", "NXabsorption_edge")
     edge["name"] = dat.attrs["element"]["edge"]
 
-    plot = create_nxclass(root, "plot", "NXdata", signal="intensity", axes="energy")
+    plot = create_nxclass(
+        root, "plot", "NXdata", signal="intensity", axes="energy", energy_indices=0
+    )
     plot["energy"] = h5py.SoftLink(root["energy"].name)
     plot["intensity"] = h5py.SoftLink(root["intensity"].name)
     plot["energy"].attrs["units"] = "eV"
@@ -75,11 +72,9 @@ def xdi2nexus(filename, nxroot, entry_name="entry"):
     proc = [
         "processing done with xraylarch version 0.9.80",
         f"larch.xafs.pre_edge(data, {kwargs})",
-        "using 'data' from arrays in rawdata",
-        "energy = data[:,0]      # column 1: energy (eV)",
-        "itrans = data[:, 2]     # column 3: transmitted beam intensity",
-        "i0 = data[:, 3]         # column 4: incident beam intensity",
-        "mu = -log(itrans/i0)    # absorbance",
+        "using the XDI columns in raw_data",
+        "energy = raw_data/energy    # column 1: energy (eV)",
+        "mu = raw_data/mutrans       # column 2: absorbance -log(itrans/i0)",
         f"edge_step = {gformat(dat.edge_step, 12)}",
         preline,
         "intensity = norm = (mu - pre_edge) /edge_step",
@@ -115,20 +110,21 @@ def xdi2nexus(filename, nxroot, entry_name="entry"):
             j = j[1:].strip()
         header.append(j)
 
-    process = create_nxclass(root, "process", "NXprocess")
+    process = create_nxclass(root, "processing", "NXprocess")
     process.attrs["NX_class"] = "NXprocess"
     process["program"] = "xraylarch"
     process["version"] = "0.9.80"
-    nts = create_nxclass(process, "notes", "NXnote")
+    nts = create_nxclass(process, "note", "NXnote")
     nts["data"] = notes
     nts["type"] = "text/plain"
 
-    # rawdata
-    array_labels = json.dumps(["energy", "intensity", "itrans", "i0"])
-    root["rawdata"] = rawdata.T
-    root["rawdata"].attrs["array_labels"] = array_labels
-
-    root["reference"] = "None"
+    # raw_data: the columns of the XDI file without modification
+    raw_data = create_nxclass(root, "raw_data", "NXcollection")
+    labels = [name.split()[0] for name in dat.attrs["column"].values()]
+    for label, units, column in zip(labels, dat.array_units, dat.data, strict=True):
+        raw_data[label] = column
+        if units:
+            raw_data[label].attrs["units"] = units
 
     # scan
     scan = create_nxclass(root, "scan", "NXparameters")
@@ -143,11 +139,11 @@ def xdi2nexus(filename, nxroot, entry_name="entry"):
 
     inst = create_nxclass(root, "instrument", "NXinstrument")
 
-    source = create_nxclass(inst, "source", "NXsource")
-    source["type"] = "Synchrotron X-ray Source"
-    source["probe"] = "x-ray"
-
+    # NXsource requires a name: write it only when the XDI file gives the facility.
     if "facility" in dat.attrs:
+        source = create_nxclass(inst, "source", "NXsource")
+        source["type"] = "Synchrotron X-ray Source"
+        source["probe"] = "x-ray"
         for aname, value in dat.attrs["facility"].items():
             if aname.lower() == "energy":
                 words = value.split(maxsplit=1)
@@ -207,7 +203,9 @@ def xdi2nexus(filename, nxroot, entry_name="entry"):
     mono_type, refl = parse_mono_string(mono_name)
     crystal["type"] = mono_type
     crystal["reflection"] = numpy.array(refl)
-    crystal["d_spacing"] = d_spacing
+    crystal["reflection"].attrs["units"] = ""
+    crystal["d_spacing"] = float(d_spacing)
+    crystal["d_spacing"].attrs["units"] = "angstrom"
 
     i0 = create_nxclass(inst, "i0", "NXdetector")
     i0["data"] = dat.i0
