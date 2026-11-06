@@ -4,14 +4,16 @@ import re
 from pathlib import Path
 
 import h5py
+import larch
 import numpy
 from larch.io import read_ascii
 from larch.io import read_xdi
 from larch.io import write_ascii
-from larch.utils import gformat
 from larch.xafs import pre_edge
 
 THIS_DIRECTORY = Path(__file__).parent
+
+PRE_EDGE = {"pre1": -150, "pre2": -50, "norm1": 150, "norm2": 750}
 
 # XDI header key of the description of each ion chamber column
 DETECTOR_KEYS = {"I0": "i0", "It": "i1", "Ir": "i2"}
@@ -21,18 +23,16 @@ def xdi2nexus(filename, nxroot, detectors):
     """Write one XDI file as an NXxas_trans entry.
 
     ``detectors`` maps each NXdetector name (i0, itrans, iref) to the column of
-    the ion chamber in the XDI file. The xmu column is ln(i0/itrans).
+    the ion chamber in the XDI file. The absorbance is ln(i0/itrans).
     """
     entry_name = filename.stem
     asc = read_ascii(filename)
     dat = read_xdi(str(filename))
 
-    dat.mu = dat.xmu * 1.0
+    i0, itrans = detectors["i0"], detectors["itrans"]
+    dat.mu = numpy.log(getattr(dat, i0) / getattr(dat, itrans))
 
-    pre_edge(dat, pre1=-150, pre2=-50, norm1=150, norm2=750)
-    pre_offset = dat.pre_edge_details.pre_offset
-    pre_slope = dat.pre_edge_details.pre_slope
-    nvict = dat.pre_edge_details.nvict
+    pre_edge(dat, **PRE_EDGE)
 
     root = create_nxclass(nxroot, entry_name, "NXentry", default="plot")
     nxroot.attrs["default"] = entry_name
@@ -80,22 +80,32 @@ def xdi2nexus(filename, nxroot, detectors):
     # process
     kwargs = ", ".join([f"{k}={v}" for k, v in dat.callargs.pre_edge.items()])
 
-    preline = f"pre_edge = {gformat(pre_offset, 12)} + {gformat(pre_slope, 12)}*energy"
-    if nvict != 0:
-        preline = f"({preline})*energy(-{dat.nvict})"
-
-    proc = [
-        "processing done with xraylarch version 0.9.80",
-        f"larch.xafs.pre_edge(data, {kwargs})",
-        "using the XDI columns in raw_data",
-        "energy = raw_data/energy    # energy (eV)",
-        f"mu = raw_data/xmu          # absorbance ln({detectors['i0']}/{detectors['itrans']})",
-        f"edge_step = {gformat(dat.edge_step, 12)}",
-        preline,
-        "intensity = norm = (mu - pre_edge) /edge_step",
+    # The note is a script that computes intensity from raw_data. It runs in
+    # Python and in larch, so it has no "with" block.
+    nxfile = Path(nxroot.file.filename).name
+    pre_edge_args = ", ".join(f"{key}={value}" for key, value in PRE_EDGE.items())
+    script = [
+        "# Compute intensity from raw_data.",
+        f"# Run it with Python or larch in the folder of {nxfile}.",
+        "",
+        "import h5py",
+        "import numpy",
+        "from larch import Group",
+        "from larch.xafs import pre_edge",
+        "",
+        f"nxfile = h5py.File('{nxfile}', 'r')",
+        f"entry = nxfile['{entry_name}']",
+        "energy = entry['raw_data/energy'][()]",
+        f"i0 = entry['raw_data/{i0}'][()]",
+        f"itrans = entry['raw_data/{itrans}'][()]",
+        "nxfile.close()",
+        "",
+        "mu = numpy.log(i0 / itrans)",
+        "dat = Group(energy=energy, mu=mu)",
+        f"pre_edge(dat, {pre_edge_args})",
+        "intensity = dat.norm",
     ]
-
-    notes = "\n".join(proc)
+    notes = "\n".join(script)
 
     columns = ["energy eV", "norm", *detectors]
     header = ["XDI/1.1"]
@@ -114,9 +124,10 @@ def xdi2nexus(filename, nxroot, detectors):
             target.append(j)
 
     header.append("Process.program: xraylarch")
-    header.append("Process.version: 0.9.80")
+    header.append(f"Process.version: {larch.__version__}")
     header.append(f"Process.command: pre_edge(data, {kwargs})")
-    for i, p in enumerate(proc[3:]):
+    steps = [line for line in script if line and not line.startswith("#")]
+    for i, p in enumerate(steps):
         header.append(f"Process.step{i + 1:d}: {p}")
     for j in end_header:
         if j.startswith("#"):
@@ -126,7 +137,7 @@ def xdi2nexus(filename, nxroot, detectors):
     process = create_nxclass(root, "processing", "NXprocess")
     process.attrs["NX_class"] = "NXprocess"
     process["program"] = "xraylarch"
-    process["version"] = "0.9.80"
+    process["version"] = larch.__version__
     nts = create_nxclass(process, "note", "NXnote")
     nts["data"] = notes
     nts["type"] = "text/plain"
