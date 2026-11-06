@@ -109,7 +109,9 @@ def xdi2nexus(filename, nxroot, detectors):
     notes = "\n".join(script)
 
     columns = ["energy eV", "norm", *detectors]
-    header = ["XDI/1.1"]
+    # Keep the application tokens of the original version line.
+    applications = asc.header[0].lstrip("#").split()[1:]
+    header = [" ".join(["XDI/1.1", *applications])]
     header += [f"Column.{i + 1}: {name}" for i, name in enumerate(columns)]
     end_header = []
     target = header
