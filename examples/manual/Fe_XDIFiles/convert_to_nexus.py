@@ -132,6 +132,8 @@ def xdi2nexus(filename, nxroot, detectors):
             break
         if "///" in j:
             target = end_header
+        if j.startswith("Scan.plot_hint:"):
+            j = "Scan.plot_hint: ln(i0/itrans)  --  ln($3/$4)"
         if not j.startswith(("Column.", "Detector.")):
             target.append(j)
 
