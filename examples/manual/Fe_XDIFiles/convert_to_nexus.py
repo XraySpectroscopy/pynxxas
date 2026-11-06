@@ -77,13 +77,17 @@ def xdi2nexus(filename, nxroot, detectors):
     sample["x_translation"] = float(x_value)
     sample["x_translation"].attrs["units"] = x_units
 
-    # process
-    kwargs = ", ".join([f"{k}={v}" for k, v in dat.callargs.pre_edge.items()])
-
     # The note is a script that computes intensity from raw_data. It runs in
     # Python and in larch, so it has no "with" block.
     nxfile = Path(nxroot.file.filename).name
     pre_edge_args = ", ".join(f"{key}={value}" for key, value in PRE_EDGE.items())
+    # The processing steps also go into the XDI header, without the read steps.
+    steps = [
+        "mu = numpy.log(i0 / itrans)",
+        "dat = Group(energy=energy, mu=mu)",
+        f"pre_edge(dat, {pre_edge_args})",
+        "intensity = dat.norm",
+    ]
     script = [
         "# Compute intensity from raw_data.",
         f"# Run it with Python or larch in the folder of {nxfile}.",
@@ -100,10 +104,7 @@ def xdi2nexus(filename, nxroot, detectors):
         f"itrans = entry['raw_data/{itrans}'][()]",
         "nxfile.close()",
         "",
-        "mu = numpy.log(i0 / itrans)",
-        "dat = Group(energy=energy, mu=mu)",
-        f"pre_edge(dat, {pre_edge_args})",
-        "intensity = dat.norm",
+        *steps,
     ]
     notes = "\n".join(script)
 
@@ -125,8 +126,7 @@ def xdi2nexus(filename, nxroot, detectors):
 
     header.append("Process.program: xraylarch")
     header.append(f"Process.version: {larch.__version__}")
-    header.append(f"Process.command: pre_edge(data, {kwargs})")
-    steps = [line for line in script if line and not line.startswith("#")]
+    header.append(f"Process.command: pre_edge(data, {pre_edge_args})")
     for i, p in enumerate(steps):
         header.append(f"Process.step{i + 1:d}: {p}")
     for j in end_header:
