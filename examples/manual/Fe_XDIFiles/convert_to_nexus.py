@@ -138,7 +138,7 @@ def xdi2nexus(filename, nxroot, detectors):
 
     header.append("Process.program: xraylarch")
     header.append(f"Process.version: {larch.__version__}")
-    header.append(f"Process.command: pre_edge(data, {pre_edge_args})")
+    header.append(f"Process.command: pre_edge(dat, {pre_edge_args})")
     for i, p in enumerate(steps):
         header.append(f"Process.step{i + 1:d}: {p}")
     for j in end_header:
