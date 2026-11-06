@@ -8,7 +8,7 @@ from ..io.convert import convert_files
 logger = logging.getLogger(__name__)
 
 
-def main(argv=None) -> None:
+def main(argv=None) -> int:
     if argv is None:
         argv = sys.argv
 
@@ -45,7 +45,7 @@ def main(argv=None) -> None:
     args = parser.parse_args(argv[1:])
     logging.basicConfig()
 
-    convert_files(
+    return convert_files(
         args.file_patterns,
         args.output_filename,
         args.output_format,

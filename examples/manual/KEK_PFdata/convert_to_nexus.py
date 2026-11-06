@@ -1,3 +1,5 @@
+import contextlib
+import io
 import json
 from pathlib import Path
 
@@ -251,9 +253,11 @@ def kekpf2nexus(filename, nxroot, entry_name="entry", metadata=None):
 
     outfile = filename.parent / (filename.stem + "_new" + filename.suffix)
 
-    write_ascii(outfile, *coldata, header=header, label=collabel)
+    # write_ascii always prints the name of the file that it writes.
+    with contextlib.redirect_stdout(io.StringIO()):
+        write_ascii(outfile, *coldata, header=header, label=collabel)
 
-    print(f"done. Wrote group {entry_name} in file {outfile}")
+    print(f"Wrote group {entry_name} in file {Path(nxroot.file.filename).name}")
 
 
 def create_nxclass(root, name, nx_class, **attrs):
@@ -284,4 +288,4 @@ def main(output_filename):
 
 
 if __name__ == "__main__":
-    main(THIS_DIRECTORY / "converted.nxs")
+    main(THIS_DIRECTORY / f"{THIS_DIRECTORY.name}.nxs")

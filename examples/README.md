@@ -18,4 +18,4 @@ This runs the auto-converter on `auto/` and executes each `convert_to_nexus.py` 
 
 ## NeXus files
 
-Each subfolder that has been converted contains a `converted.nxs` file. These are generated from the source data and can be safely deleted and regenerated.
+`auto/converted.nxs` contains one NeXus group per XDI file in `auto/`, written by `nxxas-convert`. Each `manual/` subfolder contains a NeXus file with the name of the subfolder, for example `manual/KEK_PFdata/KEK_PFdata.nxs`. These are generated from the source data and can be safely deleted and regenerated.
