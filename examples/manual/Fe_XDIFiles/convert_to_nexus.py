@@ -1,177 +1,206 @@
 import contextlib
 import io
-import json
+import re
 from pathlib import Path
 
 import h5py
+import larch
 import numpy
 from larch.io import read_ascii
 from larch.io import read_xdi
 from larch.io import write_ascii
-from larch.utils import gformat
 from larch.xafs import pre_edge
 
 THIS_DIRECTORY = Path(__file__).parent
 
+PRE_EDGE = {"pre1": -150, "pre2": -50, "norm1": 150, "norm2": 750}
 
-def xdi2nexus(filename, nxroot, entry_name="entry"):
+# XDI header key of the description of each ion chamber column
+DETECTOR_KEYS = {"I0": "i0", "It": "i1", "Ir": "i2"}
+
+
+def xdi2nexus(filename, nxroot, detectors):
+    """Write one XDI file as an NXxas_trans entry.
+
+    ``detectors`` maps each NXdetector name (i0, itrans, iref) to the column of
+    the ion chamber in the XDI file. The absorbance is ln(i0/itrans).
+    """
+    entry_name = filename.stem
     asc = read_ascii(filename)
     dat = read_xdi(str(filename))
 
-    dat.mu = dat.mutrans * 1.0
-    dat.itrans = (dat.itrans * 100.0).astype("int32") / 100.0  # round
-    dat.array_labels[dat.array_labels.index("mutrans")] = "mu"
+    i0, itrans = detectors["i0"], detectors["itrans"]
+    dat.mu = numpy.log(getattr(dat, i0) / getattr(dat, itrans))
 
-    pre_edge(dat, pre1=-150, pre2=-50, norm1=150, norm2=750)
-    pre_offset = dat.pre_edge_details.pre_offset
-    pre_slope = dat.pre_edge_details.pre_slope
-    nvict = dat.pre_edge_details.nvict
-
-    rawdata = numpy.zeros((len(dat.energy), 4), dtype="float64")
-    rawdata[:, 0] = dat.energy
-    rawdata[:, 1] = dat.norm
-    rawdata[:, 2] = (dat.itrans * 10.0).astype("int32") / 10.0
-    rawdata[:, 3] = dat.i0 * 1.0
+    pre_edge(dat, **PRE_EDGE)
 
     root = create_nxclass(nxroot, entry_name, "NXentry", default="plot")
-    nxroot.attrs["default"] = entry_name
-    root["definition"] = "NXxas"
+    root["definition"] = "NXxas_trans"
+    scan = dat.attrs["scan"]
+    for key in ("start_time", "end_time"):
+        if key in scan:
+            root[key] = scan[key]
 
-    root["mode"] = "transmission"
+    # XDI metadata that the NXentry base class defines
+    root["run_cycle"] = dat.attrs["facility"]["cycle"]
+    user = create_nxclass(root, "user", "NXuser")
+    user["name"] = scan["experimenters"]
 
     root["energy"] = dat.energy
     root["energy"].attrs["units"] = "eV"
     root["intensity"] = dat.norm
+    root["intensity"].attrs["units"] = ""
+    root["intensity"].attrs["type"] = "absorbance"
+    root["intensity"].attrs["provenance"] = "measured"
 
     element = create_nxclass(root, "element", "NXelement")
     element["symbol"] = dat.attrs["element"]["symbol"]
 
-    edge = create_nxclass(root, "edge", "NXedge")
+    edge = create_nxclass(root, "edge", "NXabsorption_edge")
     edge["name"] = dat.attrs["element"]["edge"]
 
-    plot = create_nxclass(root, "plot", "NXdata", signal="intensity", axes="energy")
+    plot = create_nxclass(
+        root, "plot", "NXdata", signal="intensity", axes="energy", energy_indices=0
+    )
     plot["energy"] = h5py.SoftLink(root["energy"].name)
     plot["intensity"] = h5py.SoftLink(root["intensity"].name)
-    plot["energy"].attrs["units"] = "eV"
     plot["energy"].attrs["long_name"] = "Energy (eV)"
     plot["intensity"].attrs["long_name"] = "Normalized mu(E)"
 
-    names = {}
-
-    # sample
+    sample_name = dat.attrs["sample"]["name"]
     sample = create_nxclass(root, "sample", "NXsample")
-    for aname, value in dat.attrs["sample"].items():
-        sample[aname] = value
-        if aname.lower() == "name":
-            names["sample"] = value
+    sample["name"] = sample_name
+    sample["description"] = dat.attrs["sample"]["prep"]
+    x_value, x_units = dat.attrs["sample"]["x"].split()
+    sample["x_translation"] = float(x_value)
+    sample["x_translation"].attrs["units"] = x_units
 
-    # process
-    kwargs = ", ".join([f"{k}={v}" for k, v in dat.callargs.pre_edge.items()])
-
-    preline = f"pre_edge = {gformat(pre_offset, 12)} + {gformat(pre_slope, 12)}*energy"
-    if nvict != 0:
-        preline = f"({preline})*energy(-{dat.nvict})"
-
-    proc = [
-        "processing done with xraylarch version 0.9.80",
-        f"larch.xafs.pre_edge(data, {kwargs})",
-        "using 'data' from arrays in rawdata",
-        "energy = data[:,0]      # column 1: energy (eV)",
-        "itrans = data[:, 2]     # column 3: transmitted beam intensity",
-        "i0 = data[:, 3]         # column 4: incident beam intensity",
-        "mu = -log(itrans/i0)    # absorbance",
-        f"edge_step = {gformat(dat.edge_step, 12)}",
-        preline,
-        "intensity = norm = (mu - pre_edge) /edge_step",
+    # The note is a script that computes intensity from raw_data. It runs in
+    # Python and in larch, so it has no "with" block.
+    nxfile = Path(nxroot.file.filename).name
+    pre_edge_args = ", ".join(f"{key}={value}" for key, value in PRE_EDGE.items())
+    # The processing steps also go into the XDI header, without the read steps.
+    steps = [
+        "mu = numpy.log(i0 / itrans)",
+        "dat = Group(energy=energy, mu=mu)",
+        f"pre_edge(dat, {pre_edge_args})",
+        "intensity = dat.norm",
     ]
+    script = [
+        "# Compute intensity from raw_data.",
+        f"# Run it with Python or larch in the folder of {nxfile}.",
+        "",
+        "import h5py",
+        "import numpy",
+        "from larch import Group",
+        "from larch.xafs import pre_edge",
+        "",
+        f"nxfile = h5py.File('{nxfile}', 'r')",
+        f"entry = nxfile['{entry_name}']",
+        "energy = entry['raw_data/energy'][()]",
+        f"i0 = entry['raw_data/{i0}'][()]",
+        f"itrans = entry['raw_data/{itrans}'][()]",
+        "nxfile.close()",
+        "",
+        *steps,
+    ]
+    notes = "\n".join(script)
 
-    notes = "\n".join(proc)
-
-    header = [
-        "XDI/1.1",
-        "Column.1: energy eV",
-        "Column.2: norm",
-        "Column.3: itrans",
-        "Column.4: i0",
+    columns = [
+        "energy eV",
+        "norm",
+        *(
+            f"{name} {dat.array_units[dat.array_labels.index(column)]}"
+            for name, column in detectors.items()
+        ),
+    ]
+    # Keep the application tokens of the original version line.
+    applications = asc.header[0].lstrip("#").split()[1:]
+    header = [" ".join(["XDI/1.1", *applications])]
+    header += [f"Column.{i + 1}: {name}" for i, name in enumerate(columns)]
+    header += [
+        f"Detector.I{i}: {dat.attrs['detector'][DETECTOR_KEYS[column]]}"
+        for i, column in enumerate(detectors.values())
     ]
     end_header = []
     target = header
-    for j in asc.header[4:]:
+    # Skip the version line, columns, and detectors of the original file.
+    for j in asc.header[1:]:
         if j.startswith("#"):
             j = j[1:].strip()
         if "---" in j:
             break
         if "///" in j:
             target = end_header
-        target.append(j)
+        if j.startswith("Scan.plot_hint:"):
+            j = "Scan.plot_hint: ln(i0/itrans)  --  ln($3/$4)"
+        if not j.startswith(("Column.", "Detector.")):
+            target.append(j)
 
     header.append("Process.program: xraylarch")
-    header.append("Process.version: 0.9.80")
-    header.append(f"Process.command: pre_edge(data, {kwargs})")
-    for i, p in enumerate(proc[3:]):
+    header.append(f"Process.version: {larch.__version__}")
+    header.append(f"Process.command: pre_edge(dat, {pre_edge_args})")
+    for i, p in enumerate(steps):
         header.append(f"Process.step{i + 1:d}: {p}")
     for j in end_header:
         if j.startswith("#"):
             j = j[1:].strip()
         header.append(j)
 
-    process = create_nxclass(root, "process", "NXprocess")
-    process.attrs["NX_class"] = "NXprocess"
+    process = create_nxclass(root, "processing", "NXprocess")
     process["program"] = "xraylarch"
-    process["version"] = "0.9.80"
-    nts = create_nxclass(process, "notes", "NXnote")
+    process["version"] = larch.__version__
+    nts = create_nxclass(process, "note", "NXnote")
     nts["data"] = notes
     nts["type"] = "text/plain"
 
-    # rawdata
-    array_labels = json.dumps(["energy", "intensity", "itrans", "i0"])
-    root["rawdata"] = rawdata.T
-    root["rawdata"].attrs["array_labels"] = array_labels
-
-    root["reference"] = "None"
-
-    # scan
-    scan = create_nxclass(root, "scan", "NXparameters")
-    scan["headers"] = json.dumps(dat.attrs)
-    scan["data_collector"] = "Matthew Newville"
-    scan["filename"] = filename.name
-
-    for key, val in dat.attrs["scan"].items():
-        scan[key] = val
-    if getattr(dat, "comments", None) is not None:
-        scan["comments"] = dat.comments
+    # raw_data: the columns of the XDI file without modification
+    raw_data = create_nxclass(root, "raw_data", "NXcollection")
+    labels = [name.split()[0] for name in dat.attrs["column"].values()]
+    for label, units, column in zip(labels, dat.array_units, dat.data, strict=True):
+        raw_data[label] = column
+        if units:
+            raw_data[label].attrs["units"] = units
 
     inst = create_nxclass(root, "instrument", "NXinstrument")
 
-    source = create_nxclass(inst, "source", "NXsource")
-    source["type"] = "Synchrotron X-ray Source"
-    source["probe"] = "x-ray"
+    # NXsource requires a name: write it only when the XDI file gives the facility.
+    facility = dat.attrs.get("facility", {}).get("name", "")
+    if facility:
+        source = create_nxclass(inst, "source", "NXsource")
+        source["type"] = "Synchrotron X-ray Source"
+        source["name"] = facility
+        source["probe"] = "x-ray"
+        # XDI specification: the facility energy is in GeV and the current in mA.
+        source["energy"] = float(dat.attrs["facility"]["energy"])
+        source["energy"].attrs["units"] = "GeV"
+        source["current"] = float(dat.attrs["facility"]["current"])
+        source["current"].attrs["units"] = "mA"
+        source["top_up"] = dat.attrs["facility"]["mode"] == "top-off"
 
-    if "facility" in dat.attrs:
-        for aname, value in dat.attrs["facility"].items():
-            if aname.lower() == "energy":
-                words = value.split(maxsplit=1)
-                en_value = float(words[0])
-                source["energy"] = en_value
-                if len(words) > 1:
-                    source["energy"].attrs["units"] = words[1]
-            else:
-                source[aname] = value
-                if aname.lower() == "name":
-                    names["facility"] = value
+    beamline = dat.attrs.get("beamline", {}).get("name", "")
+    root["title"] = " ".join([sample_name, facility, beamline]).strip()
+    inst["name"] = beamline
 
-    bl = create_nxclass(inst, "beamline", "NXparameters")
-    for aname, value in dat.attrs["beamline"].items():
-        bl[aname] = value
-        if aname.lower() == "name":
-            names["beamline"] = value
+    xray_source = dat.attrs["beamline"]["xray_source"]
+    if "wiggler" in xray_source:
+        wiggler = create_nxclass(inst, "wiggler", "NXinsertion_device")
+        wiggler["type"] = "wiggler"
+        if "three-pole" in xray_source:
+            wiggler["poles"] = 3
 
-    title_words = [
-        names.get("sample", filename.name),
-        names.get("facility", ""),
-        names.get("beamline", ""),
-    ]
-    root["title"] = (" ".join(title_words)).strip()
+    # Mirrors: the XDI text in the description, the pitch as the incident angle
+    for name, key in [
+        ("collimating_mirror", "collimation"),
+        ("harmonic_rejection_mirror", "harmonic_rejection"),
+    ]:
+        text = dat.attrs["beamline"][key]
+        mirror = create_nxclass(inst, name, "NXmirror")
+        mirror["description"] = text
+        pitch = re.search(r"pitch = ([\d.]+) mrad", text)
+        if pitch:
+            mirror["incident_angle"] = float(pitch.group(1))
+            mirror["incident_angle"].attrs["units"] = "mrad"
 
     # mono
     d_spacing = dat.attrs["mono"].get("d_spacing", 3.13550)
@@ -201,21 +230,23 @@ def xdi2nexus(filename, nxroot, entry_name="entry"):
         return mono_type, refl
 
     monochromator = create_nxclass(inst, "monochromator", "NXmonochromator")
-    monochromator["energy"] = h5py.SoftLink(root["energy"].name)
 
     crystal = create_nxclass(monochromator, "crystal", "NXcrystal")
     mono_type, refl = parse_mono_string(mono_name)
     crystal["type"] = mono_type
     crystal["reflection"] = numpy.array(refl)
-    crystal["d_spacing"] = d_spacing
+    crystal["reflection"].attrs["units"] = ""
+    crystal["d_spacing"] = float(d_spacing)
+    crystal["d_spacing"].attrs["units"] = "angstrom"
 
-    i0 = create_nxclass(inst, "i0", "NXdetector")
-    i0["data"] = dat.i0
-    i0["description"] = dat.attrs["detector"]["i0"]
-
-    itrans = create_nxclass(inst, "itrans", "NXdetector")
-    itrans["data"] = dat.itrans
-    itrans["description"] = dat.attrs["detector"]["i1"]
+    for name, column in detectors.items():
+        detector = create_nxclass(inst, name, "NXdetector")
+        detector["data"] = getattr(dat, column)
+        detector["data"].attrs["units"] = dat.array_units[
+            dat.array_labels.index(column)
+        ]
+        detector["type"] = "ion chamber"
+        detector["description"] = dat.attrs["detector"][DETECTOR_KEYS[column]]
 
     outfile = filename.parent / (filename.stem + "_new.xdi")
     # write_ascii always prints the name of the file that it writes.
@@ -224,10 +255,9 @@ def xdi2nexus(filename, nxroot, entry_name="entry"):
             outfile,
             dat.energy,
             dat.norm,
-            dat.itrans,
-            dat.i0,
+            *(getattr(dat, column) for column in detectors.values()),
             header=header,
-            label="energy           norm             itrans           i0",
+            label="".join(f"{name:<17}" for name in ["energy", "norm", *detectors]),
         )
 
     print(f"Wrote group {entry_name} in file {Path(nxroot.file.filename).name}")
@@ -244,9 +274,13 @@ def create_nxclass(root, name, nx_class, **attrs):
 
 def main(output_filename):
     with h5py.File(output_filename, "w") as nxroot:
-        xdi2nexus(THIS_DIRECTORY / "fe_metal_rt.xdi", nxroot, entry_name="fe_metal")
-        xdi2nexus(THIS_DIRECTORY / "fe2o3_rt.xdi", nxroot, entry_name="fe2o3")
-        xdi2nexus(THIS_DIRECTORY / "feo_rt1.xdi", nxroot, entry_name="feo")
+        sample = {"i0": "I0", "itrans": "It", "iref": "Ir"}
+        # The Fe foil is the reference sample: It is the beam on the foil.
+        foil = {"i0": "It", "itrans": "Ir"}
+        xdi2nexus(THIS_DIRECTORY / "Fe-K-IronFoil.xdi", nxroot, foil)
+        xdi2nexus(THIS_DIRECTORY / "Fe-Hematite.xdi", nxroot, sample)
+        xdi2nexus(THIS_DIRECTORY / "Fe-Wustite.xdi", nxroot, sample)
+        nxroot.attrs["default"] = "Fe-K-IronFoil"
 
 
 if __name__ == "__main__":
