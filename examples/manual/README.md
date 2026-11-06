@@ -39,7 +39,12 @@ Folders and Files (so far):
 ===========================
 
 Fe_XDIFiles:  3 XDI files (all Fe K edge, transmission XAFS)
-      are put into a single nexus file.
+      are put into a single nexus file: Fe foil, hematite (Fe2O3) and
+      wustite (FeO), measured at NSLS-II BMM (06BM) with I0, It and Ir.
+      The Fe foil is measured in the reference position: its absorbance
+      is ln(It/Ir). Source: the BMM standards library of the National
+      Institute of Standards and Technology (NIST), without changes,
+      https://github.com/bruceravel/bmm-standards/tree/main/Data/Fe
 
 KEK_PF: 1 data file from Photon Factory, KEK.  Fluorescence XAFS,
       that was recorded as a function of angle

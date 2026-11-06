@@ -13,14 +13,21 @@ from larch.xafs import pre_edge
 
 THIS_DIRECTORY = Path(__file__).parent
 
+# XDI header key of the description of each ion chamber column
+DETECTOR_KEYS = {"I0": "i0", "It": "i1", "Ir": "i2"}
 
-def xdi2nexus(filename, nxroot, entry_name="entry"):
+
+def xdi2nexus(filename, nxroot, detectors):
+    """Write one XDI file as an NXxas_trans entry.
+
+    ``detectors`` maps each NXdetector name (i0, itrans, iref) to the column of
+    the ion chamber in the XDI file. The xmu column is ln(i0/itrans).
+    """
+    entry_name = filename.stem
     asc = read_ascii(filename)
     dat = read_xdi(str(filename))
 
-    dat.mu = dat.mutrans * 1.0
-    dat.itrans = (dat.itrans * 100.0).astype("int32") / 100.0  # round
-    dat.array_labels[dat.array_labels.index("mutrans")] = "mu"
+    dat.mu = dat.xmu * 1.0
 
     pre_edge(dat, pre1=-150, pre2=-50, norm1=150, norm2=750)
     pre_offset = dat.pre_edge_details.pre_offset
@@ -73,8 +80,8 @@ def xdi2nexus(filename, nxroot, entry_name="entry"):
         "processing done with xraylarch version 0.9.80",
         f"larch.xafs.pre_edge(data, {kwargs})",
         "using the XDI columns in raw_data",
-        "energy = raw_data/energy    # column 1: energy (eV)",
-        "mu = raw_data/mutrans       # column 2: absorbance -log(itrans/i0)",
+        "energy = raw_data/energy    # energy (eV)",
+        f"mu = raw_data/xmu          # absorbance ln({detectors['i0']}/{detectors['itrans']})",
         f"edge_step = {gformat(dat.edge_step, 12)}",
         preline,
         "intensity = norm = (mu - pre_edge) /edge_step",
@@ -82,23 +89,21 @@ def xdi2nexus(filename, nxroot, entry_name="entry"):
 
     notes = "\n".join(proc)
 
-    header = [
-        "XDI/1.1",
-        "Column.1: energy eV",
-        "Column.2: norm",
-        "Column.3: itrans",
-        "Column.4: i0",
-    ]
+    columns = ["energy eV", "norm", *detectors]
+    header = ["XDI/1.1"]
+    header += [f"Column.{i + 1}: {name}" for i, name in enumerate(columns)]
     end_header = []
     target = header
-    for j in asc.header[4:]:
+    # Skip the XDI version line and the columns of the original file.
+    for j in asc.header[1:]:
         if j.startswith("#"):
             j = j[1:].strip()
         if "---" in j:
             break
         if "///" in j:
             target = end_header
-        target.append(j)
+        if not j.startswith("Column."):
+            target.append(j)
 
     header.append("Process.program: xraylarch")
     header.append("Process.version: 0.9.80")
@@ -129,7 +134,6 @@ def xdi2nexus(filename, nxroot, entry_name="entry"):
     # scan
     scan = create_nxclass(root, "scan", "NXparameters")
     scan["headers"] = json.dumps(dat.attrs)
-    scan["data_collector"] = "Matthew Newville"
     scan["filename"] = filename.name
 
     for key, val in dat.attrs["scan"].items():
@@ -207,13 +211,13 @@ def xdi2nexus(filename, nxroot, entry_name="entry"):
     crystal["d_spacing"] = float(d_spacing)
     crystal["d_spacing"].attrs["units"] = "angstrom"
 
-    i0 = create_nxclass(inst, "i0", "NXdetector")
-    i0["data"] = dat.i0
-    i0["description"] = dat.attrs["detector"]["i0"]
-
-    itrans = create_nxclass(inst, "itrans", "NXdetector")
-    itrans["data"] = dat.itrans
-    itrans["description"] = dat.attrs["detector"]["i1"]
+    for name, column in detectors.items():
+        detector = create_nxclass(inst, name, "NXdetector")
+        detector["data"] = getattr(dat, column)
+        detector["data"].attrs["units"] = dat.array_units[
+            dat.array_labels.index(column)
+        ]
+        detector["description"] = dat.attrs["detector"][DETECTOR_KEYS[column]]
 
     outfile = filename.parent / (filename.stem + "_new.xdi")
     # write_ascii always prints the name of the file that it writes.
@@ -222,10 +226,9 @@ def xdi2nexus(filename, nxroot, entry_name="entry"):
             outfile,
             dat.energy,
             dat.norm,
-            dat.itrans,
-            dat.i0,
+            *(getattr(dat, column) for column in detectors.values()),
             header=header,
-            label="energy           norm             itrans           i0",
+            label="".join(f"{name:<17}" for name in ["energy", "norm", *detectors]),
         )
 
     print(f"Wrote group {entry_name} in file {Path(nxroot.file.filename).name}")
@@ -242,9 +245,12 @@ def create_nxclass(root, name, nx_class, **attrs):
 
 def main(output_filename):
     with h5py.File(output_filename, "w") as nxroot:
-        xdi2nexus(THIS_DIRECTORY / "fe_metal_rt.xdi", nxroot, entry_name="fe_metal")
-        xdi2nexus(THIS_DIRECTORY / "fe2o3_rt.xdi", nxroot, entry_name="fe2o3")
-        xdi2nexus(THIS_DIRECTORY / "feo_rt1.xdi", nxroot, entry_name="feo")
+        sample = {"i0": "I0", "itrans": "It", "iref": "Ir"}
+        # The Fe foil is the reference sample: It is the beam on the foil.
+        foil = {"i0": "It", "itrans": "Ir"}
+        xdi2nexus(THIS_DIRECTORY / "Fe-K-IronFoil.xdi", nxroot, foil)
+        xdi2nexus(THIS_DIRECTORY / "Fe-Hematite.xdi", nxroot, sample)
+        xdi2nexus(THIS_DIRECTORY / "Fe-Wustite.xdi", nxroot, sample)
 
 
 if __name__ == "__main__":
