@@ -25,7 +25,8 @@ def xdi2nexus(filename, nxroot, detectors):
     ``detectors`` maps each NXdetector name (i0, itrans, iref) to the column of
     the ion chamber in the XDI file. The absorbance is ln(i0/itrans).
     """
-    entry_name = filename.stem
+    # NeXus names do not allow hyphens.
+    entry_name = filename.stem.replace("-", "_")
     asc = read_ascii(filename)
     dat = read_xdi(str(filename))
 
@@ -280,7 +281,7 @@ def main(output_filename):
         xdi2nexus(THIS_DIRECTORY / "Fe-K-IronFoil.xdi", nxroot, foil)
         xdi2nexus(THIS_DIRECTORY / "Fe-Hematite.xdi", nxroot, sample)
         xdi2nexus(THIS_DIRECTORY / "Fe-Wustite.xdi", nxroot, sample)
-        nxroot.attrs["default"] = "Fe-K-IronFoil"
+        nxroot.attrs["default"] = "Fe_K_IronFoil"
 
 
 if __name__ == "__main__":
