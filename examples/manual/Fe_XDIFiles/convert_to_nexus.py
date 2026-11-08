@@ -72,9 +72,12 @@ def xdi2nexus(filename, nxroot, detectors):
     sample = create_nxclass(root, "sample", "NXsample")
     sample["name"] = sample_name
     sample["description"] = dat.attrs["sample"]["prep"]
-    x_value, x_units = dat.attrs["sample"]["x"].split()
-    sample["x_translation"] = float(x_value)
-    sample["x_translation"].attrs["units"] = x_units
+    # Sample.x is the position of the sample stage. Write it only when the sample
+    # is on the stage, that is, when I0 is the beam on the sample.
+    if i0 == "I0":
+        x_value, x_units = dat.attrs["sample"]["x"].split()
+        sample["x_translation"] = float(x_value)
+        sample["x_translation"].attrs["units"] = x_units
 
     # The note is a script that computes intensity from raw_data. It runs in
     # Python and in larch, so it has no "with" block.
