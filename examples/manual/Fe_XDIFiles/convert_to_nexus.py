@@ -186,9 +186,12 @@ def xdi2nexus(filename, nxroot, detectors):
     xray_source = dat.attrs["beamline"]["xray_source"]
     if "wiggler" in xray_source:
         wiggler = create_nxclass(inst, "wiggler", "NXinsertion_device")
-        wiggler["type"] = "wiggler"
+        # NXinsertion_device recommends "wavelength_shifter" for a three-pole wiggler.
         if "three-pole" in xray_source:
+            wiggler["type"] = "wavelength_shifter"
             wiggler["poles"] = 3
+        else:
+            wiggler["type"] = "wiggler"
 
     # Mirrors: the XDI text in the description, the pitch as the incident angle
     for name, key in [
