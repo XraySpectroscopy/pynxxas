@@ -211,30 +211,29 @@ def xdi2nexus(filename, nxroot, detectors):
             mirror["incident_angle"].attrs["units"] = "mrad"
 
     # mono
-    d_spacing = dat.attrs["mono"].get("d_spacing", 3.13550)
-    mono_name = dat.attrs["mono"].get("name", "Si 111")
+    d_spacing = dat.attrs["mono"]["d_spacing"]
+    mono_name = dat.attrs["mono"]["name"]
 
     def parse_mono_string(mono_name):
-        mono_type = "Si"
         for k in "()[]":
             mono_name = mono_name.replace(k, " ")
+        # Remove the space that replaces the closing bracket.
+        mono_name = mono_name.strip()
+        # Separate the material from the indices, for example in "Si111". Insert
+        # one space only, so that "SiC" does not become "Si C".
         for k in ("SiC", "Si", "Ge", "C"):
-            mono_name = mono_name.replace(k, f"{k} ")
+            if mono_name.startswith(k):
+                mono_name = mono_name.replace(k, f"{k} ", 1)
+                break
 
-        words = mono_name.split(maxsplit=1)
-        if words[0] in ("SiC", "Si", "Ge", "C"):
-            mono_type = words[0]
+        # A name without three indices raises an error instead of a default.
+        mono_type, refl = mono_name.split(maxsplit=1)
+        if len(refl) > 3:
+            refl = refl.replace(",", " ").split()
+        else:
+            refl = (refl[0], refl[1], refl[2])
 
-        try:
-            refl = words[1]
-            if len(refl) > 3:
-                refl = refl.replace(" ", ",").split(",")
-            else:
-                refl = (refl[0], refl[1], refl[2])
-
-            refl = [int(w.strip()) for w in refl]
-        except Exception:
-            refl = (1, 1, 1)
+        refl = [int(w.strip()) for w in refl]
         return mono_type, refl
 
     monochromator = create_nxclass(inst, "monochromator", "NXmonochromator")
