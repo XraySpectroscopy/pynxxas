@@ -190,6 +190,7 @@ def xdi2nexus(filename, nxroot, detectors):
         if "three-pole" in xray_source:
             wiggler["type"] = "wavelength_shifter"
             wiggler["poles"] = 3
+            wiggler["poles"].attrs["units"] = ""
         else:
             wiggler["type"] = "wiggler"
 
