@@ -168,22 +168,20 @@ def xdi2nexus(filename, nxroot, detectors):
 
     inst = create_nxclass(root, "instrument", "NXinstrument")
 
-    # NXsource requires a name: write it only when the XDI file gives the facility.
-    facility = dat.attrs.get("facility", {}).get("name", "")
-    if facility:
-        source = create_nxclass(inst, "source", "NXsource")
-        source["type"] = "Synchrotron X-ray Source"
-        source["name"] = facility
-        source["probe"] = "x-ray"
-        # XDI specification: the facility energy is in GeV and the current in mA.
-        source["energy"] = float(dat.attrs["facility"]["energy"])
-        source["energy"].attrs["units"] = "GeV"
-        source["current"] = float(dat.attrs["facility"]["current"])
-        source["current"].attrs["units"] = "mA"
-        source["top_up"] = dat.attrs["facility"]["mode"] == "top-off"
+    facility = dat.attrs["facility"]["name"]
+    source = create_nxclass(inst, "source", "NXsource")
+    source["type"] = "Synchrotron X-ray Source"
+    source["name"] = facility
+    source["probe"] = "x-ray"
+    # XDI specification: the facility energy is in GeV and the current in mA.
+    source["energy"] = float(dat.attrs["facility"]["energy"])
+    source["energy"].attrs["units"] = "GeV"
+    source["current"] = float(dat.attrs["facility"]["current"])
+    source["current"].attrs["units"] = "mA"
+    source["top_up"] = dat.attrs["facility"]["mode"] == "top-off"
 
-    beamline = dat.attrs.get("beamline", {}).get("name", "")
-    root["title"] = " ".join([sample_name, facility, beamline]).strip()
+    beamline = dat.attrs["beamline"]["name"]
+    root["title"] = " ".join([sample_name, facility, beamline])
     inst["name"] = beamline
 
     xray_source = dat.attrs["beamline"]["xray_source"]
