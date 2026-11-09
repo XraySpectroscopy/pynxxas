@@ -1,14 +1,10 @@
-import contextlib
-import io
 import re
 from pathlib import Path
 
 import h5py
 import larch
 import numpy
-from larch.io import read_ascii
 from larch.io import read_xdi
-from larch.io import write_ascii
 from larch.xafs import pre_edge
 
 THIS_DIRECTORY = Path(__file__).parent
@@ -27,7 +23,6 @@ def xdi2nexus(filename, nxroot, detectors):
     """
     # NeXus names do not allow hyphens.
     entry_name = filename.stem.replace("-", "_")
-    asc = read_ascii(filename)
     dat = read_xdi(str(filename))
 
     i0, itrans = detectors["i0"], detectors["itrans"]
@@ -83,13 +78,6 @@ def xdi2nexus(filename, nxroot, detectors):
     # Python and in larch, so it has no "with" block.
     nxfile = Path(nxroot.file.filename).name
     pre_edge_args = ", ".join(f"{key}={value}" for key, value in PRE_EDGE.items())
-    # The processing steps also go into the XDI header, without the read steps.
-    steps = [
-        "mu = numpy.log(i0 / itrans)",
-        "dat = Group(energy=energy, mu=mu)",
-        f"pre_edge(dat, {pre_edge_args})",
-        "intensity = dat.norm",
-    ]
     script = [
         "# Compute intensity from raw_data.",
         f"# Run it with Python or larch in the folder of {nxfile}.",
@@ -106,50 +94,12 @@ def xdi2nexus(filename, nxroot, detectors):
         f"itrans = entry['raw_data/{itrans}'][()]",
         "nxfile.close()",
         "",
-        *steps,
+        "mu = numpy.log(i0 / itrans)",
+        "dat = Group(energy=energy, mu=mu)",
+        f"pre_edge(dat, {pre_edge_args})",
+        "intensity = dat.norm",
     ]
     notes = "\n".join(script)
-
-    columns = [
-        "energy eV",
-        "norm",
-        *(
-            f"{name} {dat.array_units[dat.array_labels.index(column)]}"
-            for name, column in detectors.items()
-        ),
-    ]
-    # Keep the application tokens of the original version line.
-    applications = asc.header[0].lstrip("#").split()[1:]
-    header = [" ".join(["XDI/1.1", *applications])]
-    header += [f"Column.{i + 1}: {name}" for i, name in enumerate(columns)]
-    header += [
-        f"Detector.I{i}: {dat.attrs['detector'][DETECTOR_KEYS[column]]}"
-        for i, column in enumerate(detectors.values())
-    ]
-    end_header = []
-    target = header
-    # Skip the version line, columns, and detectors of the original file.
-    for j in asc.header[1:]:
-        if j.startswith("#"):
-            j = j[1:].strip()
-        if "---" in j:
-            break
-        if "///" in j:
-            target = end_header
-        if j.startswith("Scan.plot_hint:"):
-            j = "Scan.plot_hint: ln(i0/itrans)  --  ln($3/$4)"
-        if not j.startswith(("Column.", "Detector.")):
-            target.append(j)
-
-    header.append("Process.program: xraylarch")
-    header.append(f"Process.version: {larch.__version__}")
-    header.append(f"Process.command: pre_edge(dat, {pre_edge_args})")
-    for i, p in enumerate(steps):
-        header.append(f"Process.step{i + 1:d}: {p}")
-    for j in end_header:
-        if j.startswith("#"):
-            j = j[1:].strip()
-        header.append(j)
 
     process = create_nxclass(root, "processing", "NXprocess")
     process["program"] = "xraylarch"
@@ -252,18 +202,6 @@ def xdi2nexus(filename, nxroot, detectors):
         ]
         detector["type"] = "ion chamber"
         detector["description"] = dat.attrs["detector"][DETECTOR_KEYS[column]]
-
-    outfile = filename.parent / (filename.stem + "_new.xdi")
-    # write_ascii always prints the name of the file that it writes.
-    with contextlib.redirect_stdout(io.StringIO()):
-        write_ascii(
-            outfile,
-            dat.energy,
-            dat.norm,
-            *(getattr(dat, column) for column in detectors.values()),
-            header=header,
-            label="".join(f"{name:<17}" for name in ["energy", "norm", *detectors]),
-        )
 
     print(f"Wrote group {entry_name} in file {Path(nxroot.file.filename).name}")
 
