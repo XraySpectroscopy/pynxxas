@@ -201,6 +201,7 @@ def xdi2nexus(filename, nxroot, detectors):
 
     crystal = create_nxclass(monochromator, "crystal", "NXcrystal")
     mono_type, refl = parse_mono_string(mono_name)
+    crystal["usage"] = "Bragg"
     crystal["type"] = mono_type
     crystal["reflection"] = numpy.array(refl)
     crystal["reflection"].attrs["units"] = ""
