@@ -206,10 +206,8 @@ def xdi2nexus(filename, nxroot, detectors):
 
     for name, column in detectors.items():
         detector = create_nxclass(inst, name, "NXdetector")
-        detector["data"] = getattr(dat, column)
-        detector["data"].attrs["units"] = dat.array_units[
-            dat.array_labels.index(column)
-        ]
+        # No correction is applied, so data is the raw_data column with its units.
+        detector["data"] = h5py.SoftLink(raw_data[column].name)
         detector["type"] = "ion chamber"
         detector["description"] = dat.attrs["detector"][DETECTOR_KEYS[column]]
         # measurement_time is the counting time of each energy point.
