@@ -1,4 +1,3 @@
-import re
 from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -158,7 +157,8 @@ def xdi2nexus(filename, nxroot, detectors):
         else:
             wiggler["type"] = "wiggler"
 
-    # Mirrors: the XDI text in the description, the pitch as the incident angle
+    # Mirrors: the XDI text in the description. The pitch stays in the text,
+    # because NXmirror does not define how to measure incident_angle.
     for name, key in [
         ("collimating_mirror", "collimation"),
         ("harmonic_rejection_mirror", "harmonic_rejection"),
@@ -166,10 +166,6 @@ def xdi2nexus(filename, nxroot, detectors):
         text = dat.attrs["beamline"][key]
         mirror = create_nxclass(inst, name, "NXmirror")
         mirror["description"] = text
-        pitch = re.search(r"pitch = ([\d.]+) mrad", text)
-        if pitch:
-            mirror["incident_angle"] = float(pitch.group(1))
-            mirror["incident_angle"].attrs["units"] = "mrad"
 
     # mono
     d_spacing = dat.attrs["mono"]["d_spacing"]
