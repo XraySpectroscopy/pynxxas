@@ -1,5 +1,7 @@
 import re
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import h5py
 import larch
@@ -33,9 +35,12 @@ def xdi2nexus(filename, nxroot, detectors):
     root = create_nxclass(nxroot, entry_name, "NXentry", default="plot")
     root["definition"] = "NXxas_trans"
     scan = dat.attrs["scan"]
+    # BMM writes the local time of NSLS-II without a time zone offset.
+    nsls2_zone = ZoneInfo("America/New_York")
     for key in ("start_time", "end_time"):
         if key in scan:
-            root[key] = scan[key]
+            time = datetime.fromisoformat(scan[key]).replace(tzinfo=nsls2_zone)
+            root[key] = time.isoformat()
 
     # XDI metadata that the NXentry base class defines
     root["run_cycle"] = dat.attrs["facility"]["cycle"]
@@ -67,12 +72,6 @@ def xdi2nexus(filename, nxroot, detectors):
     sample = create_nxclass(root, "sample", "NXsample")
     sample["name"] = sample_name
     sample["description"] = dat.attrs["sample"]["prep"]
-    # Sample.x is the position of the sample stage. Write it only when the sample
-    # is on the stage, that is, when I0 is the beam on the sample.
-    if i0 == "I0":
-        x_value, x_units = dat.attrs["sample"]["x"].split()
-        sample["x_translation"] = float(x_value)
-        sample["x_translation"].attrs["units"] = x_units
 
     # The note is a script that computes intensity from raw_data. It runs in
     # Python and in larch, so it has no "with" block.
