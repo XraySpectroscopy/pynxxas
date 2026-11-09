@@ -69,9 +69,17 @@ def xdi2nexus(filename, nxroot, detectors):
     plot["intensity"].attrs["long_name"] = "Normalized mu(E)"
 
     sample_name = dat.attrs["sample"]["name"]
+    prep = dat.attrs["sample"]["prep"]
     sample = create_nxclass(root, "sample", "NXsample")
     sample["name"] = sample_name
-    sample["description"] = dat.attrs["sample"]["prep"]
+    sample["description"] = prep
+    # NXsample gives powder and foil as examples of physical_form.
+    for form in ("powder", "foil"):
+        if form in prep:
+            sample["physical_form"] = form
+    # The reference foil is the energy calibration standard.
+    if prep == "reference foil":
+        sample["type"] = "calibration sample"
 
     # The note is a script that computes intensity from raw_data. It runs in
     # Python and in larch, so it has no "with" block.
@@ -103,6 +111,7 @@ def xdi2nexus(filename, nxroot, detectors):
     process = create_nxclass(root, "processing", "NXprocess")
     process["program"] = "xraylarch"
     process["version"] = larch.__version__
+    process["date"] = datetime.now().astimezone().isoformat(timespec="seconds")
     nts = create_nxclass(process, "note", "NXnote")
     nts["data"] = notes
     nts["type"] = "text/plain"
@@ -132,6 +141,8 @@ def xdi2nexus(filename, nxroot, detectors):
     beamline = dat.attrs["beamline"]["name"]
     root["title"] = " ".join([sample_name, facility, beamline])
     inst["name"] = beamline
+    # The first word of Beamline.name is the acronym of the beamline (BMM).
+    inst["name"].attrs["short_name"] = beamline.split()[0]
 
     xray_source = dat.attrs["beamline"]["xray_source"]
     if "wiggler" in xray_source:
@@ -201,6 +212,8 @@ def xdi2nexus(filename, nxroot, detectors):
         ]
         detector["type"] = "ion chamber"
         detector["description"] = dat.attrs["detector"][DETECTOR_KEYS[column]]
+        # measurement_time is the counting time of each energy point.
+        detector["count_time"] = h5py.SoftLink(raw_data["measurement_time"].name)
 
     print(f"Wrote group {entry_name} in file {Path(nxroot.file.filename).name}")
 
