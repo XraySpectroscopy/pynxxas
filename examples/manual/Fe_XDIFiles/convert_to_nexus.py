@@ -16,6 +16,9 @@ PRE_EDGE = {"pre1": -150, "pre2": -50, "norm1": 150, "norm2": 750}
 # XDI header key of the description of each ion chamber column
 DETECTOR_KEYS = {"I0": "i0", "It": "i1", "Ir": "i2"}
 
+# Hill formula of each sample in CIF format
+FORMULAS = {"Fe foil": "Fe", "alpha-Fe2O3": "Fe2 O3", "FeO": "Fe O"}
+
 
 def xdi2nexus(filename, nxroot, detectors):
     """Write one XDI file as an NXxas_trans entry.
@@ -72,14 +75,14 @@ def xdi2nexus(filename, nxroot, detectors):
     prep = dat.attrs["sample"]["prep"]
     sample = create_nxclass(root, "sample", "NXsample")
     sample["name"] = sample_name
+    sample["chemical_formula"] = FORMULAS[sample_name]
     sample["description"] = prep
     # NXsample gives powder and foil as examples of physical_form.
     for form in ("powder", "foil"):
         if form in prep:
             sample["physical_form"] = form
     # The reference foil is the energy calibration standard.
-    if prep == "reference foil":
-        sample["type"] = "calibration sample"
+    sample["type"] = "calibration sample" if prep == "reference foil" else "sample"
 
     # The note is a script that computes intensity from raw_data. It runs in
     # Python and in larch, so it has no "with" block.
