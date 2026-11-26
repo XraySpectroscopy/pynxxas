@@ -46,6 +46,10 @@ def xdi2nexus(filename, nxroot, detectors):
 
     # XDI metadata that the NXentry base class defines
     root["run_cycle"] = dat.attrs["facility"]["cycle"]
+    if "gup" in dat.attrs["facility"]:
+        root["experiment_identifier"] = dat.attrs["facility"]["gup"]
+    if "uid" in scan:
+        root["entry_identifier_uuid"] = scan["uid"]
     user = create_nxclass(root, "user", "NXuser")
     user["name"] = scan["experimenters"]
 
