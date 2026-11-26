@@ -169,11 +169,6 @@ def debye2nexus(nxroot_in, nxroot_out, entry_name):
         raise ValueError("Expected one timestamp per energy sweep.")
     time = write_field(data, "time", times - start.timestamp(), units="s")
     time.attrs["long_name"] = "Sweep time since entry start (s)"
-    reference = write_field(
-        data, "mu_reference", on_grid(nidaq["nidaq_ref_abs/value"][()]), units=""
-    )
-    reference.attrs["long_name"] = "Reference absorbance ln(I1/I2)"
-    data.attrs["auxiliary_signals"] = ["mu_reference"]
     data.attrs["energy_indices"] = 1
     for name in ("energy", "intensity"):
         # NeXus identifies a hard link by the target attribute.
@@ -192,7 +187,7 @@ def debye2nexus(nxroot_in, nxroot_out, entry_name):
     write_field(note, "type", "text/plain")
     filename = Path(nxroot_out.filename).name
     script = f"""# Run with Python in the directory containing {filename}.
-# Reproduce the energy axis and both absorbance signals from the stored DAQ arrays.
+# Reproduce the energy axis and sample absorbance from the stored DAQ arrays.
 import h5py
 import numpy
 
@@ -200,10 +195,9 @@ import numpy
 with h5py.File({filename!r}, "r") as nxfile:
     raw = nxfile[{raw_data.name!r}]
     energy, on_grid = energy_grid(raw["nidaq_energy"][()])
-    # The DAQ recorded ln(AI0/AI2) and ln(AI2/AI4) from mean amplifier voltages.
-    # Align these recorded absorbances without applying a gain correction.
+    # The DAQ recorded the sample absorbance as ln(AI0/AI2) from mean amplifier voltages.
+    # Align the recorded values without applying a gain correction.
     intensity = on_grid(raw["nidaq_smpl_abs"][()])
-    mu_reference = on_grid(raw["nidaq_ref_abs"][()])
 """
     write_field(note, "data", script)
 

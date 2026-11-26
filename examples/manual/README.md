@@ -58,6 +58,5 @@ log(I0/It) for transmission and log(Ifluo/(I0*Lt)) for fluorescence.
 Ni K-edge transmission QEXAFS of NiO at the Swiss Light Source.
 Run `python examples/manual/SLS_Debye/convert_to_nexus.py` from the repository
 root to convert `S04301_master.h5` to `SLS_Debye.nxs` in the same folder.
-The default plot shows 20 sweeps against elapsed time and energy. It uses
-the recorded sample absorbance, with simultaneous reference absorbance as
-an auxiliary signal. The original transmission arrays are in `raw_data`.
+The default plot shows the recorded sample absorbance for 20 sweeps against
+elapsed time and energy. The original transmission arrays are in `raw_data`.
