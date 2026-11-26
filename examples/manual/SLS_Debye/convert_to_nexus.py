@@ -1,6 +1,7 @@
 """Convert the SLS Debye transmission scan S04301 to NXxas_trans."""
 
 import datetime
+from inspect import getsource
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -53,11 +54,8 @@ def read_string(group, name):
     return group[name][()].decode()
 
 
-def debye2nexus(nxroot_in, nxroot_out, entry_name):
-    nidaq = nxroot_in[NIDAQ]
-    metadata = nxroot_in[METADATA]
-
-    energies = nidaq["nidaq_energy/value"][()]
+def energy_grid(energies):
+    """Return the sorted measured energies and a function to align a channel."""
     valid = energies != 0  # The DAQ pads each sweep with zero energy.
     sweeps, _ = numpy.nonzero(valid)
     grid, bins = numpy.unique(energies[valid], return_inverse=True)
@@ -65,11 +63,19 @@ def debye2nexus(nxroot_in, nxroot_out, entry_name):
     if numpy.unique(sweeps * grid.size + bins).size != bins.size:
         raise ValueError("A sweep contains multiple measurements at the same energy.")
 
-    def on_grid(channel):
-        values = nidaq[f"{channel}/value"][()]
+    def on_grid(values):
         result = numpy.full(shape, numpy.nan, dtype=values.dtype)
         result[sweeps, bins] = values[valid]
         return result
+
+    return grid, on_grid
+
+
+def debye2nexus(nxroot_in, nxroot_out, entry_name):
+    nidaq = nxroot_in[NIDAQ]
+    metadata = nxroot_in[METADATA]
+    energies = nidaq["nidaq_energy/value"][()]
+    grid, on_grid = energy_grid(energies)
 
     sample_name = read_string(metadata, "sample_name")
     element = read_string(metadata, "Element")
@@ -100,7 +106,7 @@ def debye2nexus(nxroot_in, nxroot_out, entry_name):
     intensity_field = write_field(
         entry,
         "intensity",
-        on_grid("nidaq_smpl_abs"),
+        on_grid(nidaq["nidaq_smpl_abs/value"][()]),
         units="",
     )
     intensity_field.attrs["type"] = "absorbance"
@@ -145,7 +151,7 @@ def debye2nexus(nxroot_in, nxroot_out, entry_name):
         detector = create_nx_group(instrument, name, "NXdetector")
         write_field(detector, "description", description)
         # The DAQ reads the amplifier outputs as voltages (nidaq_readout_range).
-        write_field(detector, "data", on_grid(channel), units="V")
+        write_field(detector, "data", on_grid(nidaq[f"{channel}/value"][()]), units="V")
         write_field(detector, "local_name", chamber)
         write_field(detector, "type", "ion chamber")
         write_field(
@@ -159,11 +165,13 @@ def debye2nexus(nxroot_in, nxroot_out, entry_name):
     data.attrs["axes"] = ["time", "energy"]
     data.attrs["time_indices"] = 0
     times = nidaq["nidaq_xas_timestamp/value"][()]
-    if times.shape != (shape[0],):
+    if times.shape != (energies.shape[0],):
         raise ValueError("Expected one timestamp per energy sweep.")
     time = write_field(data, "time", times - start.timestamp(), units="s")
     time.attrs["long_name"] = "Sweep time since entry start (s)"
-    reference = write_field(data, "mu_reference", on_grid("nidaq_ref_abs"), units="")
+    reference = write_field(
+        data, "mu_reference", on_grid(nidaq["nidaq_ref_abs/value"][()]), units=""
+    )
     reference.attrs["long_name"] = "Reference absorbance ln(I1/I2)"
     data.attrs["auxiliary_signals"] = ["mu_reference"]
     data.attrs["energy_indices"] = 1
@@ -182,16 +190,22 @@ def debye2nexus(nxroot_in, nxroot_out, entry_name):
     )
     note = create_nx_group(process, "note", "NXnote")
     write_field(note, "type", "text/plain")
-    write_field(
-        note,
-        "data",
-        "The DAQ records sample absorbance as ln(AI0/AI2) and reference absorbance "
-        "as ln(AI2/AI4), using the mean amplifier output voltages. "
-        "The converter uses these recorded absorbances without a gain correction. "
-        "For each sweep, discard bins with zero energy (DAQ padding) and place the "
-        "remaining values at the matching energy on the sorted union of measured energies. "
-        "Missing bins are NaN. The source arrays retain acquisition order in raw_data.",
-    )
+    filename = Path(nxroot_out.filename).name
+    script = f"""# Run with Python in the directory containing {filename}.
+# Reproduce the energy axis and both absorbance signals from the stored DAQ arrays.
+import h5py
+import numpy
+
+{getsource(energy_grid)}
+with h5py.File({filename!r}, "r") as nxfile:
+    raw = nxfile[{raw_data.name!r}]
+    energy, on_grid = energy_grid(raw["nidaq_energy"][()])
+    # The DAQ recorded ln(AI0/AI2) and ln(AI2/AI4) from mean amplifier voltages.
+    # Align these recorded absorbances without applying a gain correction.
+    intensity = on_grid(raw["nidaq_smpl_abs"][()])
+    mu_reference = on_grid(raw["nidaq_ref_abs"][()])
+"""
+    write_field(note, "data", script)
 
 
 def main(output_filename):
